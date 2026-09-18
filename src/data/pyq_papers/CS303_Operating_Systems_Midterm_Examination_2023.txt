@@ -1,0 +1,11 @@
+STANFORD UNIVERSITY / ANNA UNIVERSITY
+Department of Computer Science and Engineering
+CS303: Operating Systems - Midterm Exam
+Duration: 2 Hours | Maximum Marks: 50
+
+1. (5 Marks) Differentiate between preemptive and non-preemptive CPU scheduling. Explain the Convoy Effect in First-Come-First-Serve (FCFS) scheduling.
+2. (10 Marks) Consider processes P1, P2, P3, P4 with Arrival Times [0, 1, 2, 3] and Burst Times [8, 4, 9, 5]. Draw Gantt Charts and calculate average waiting time for: (a) Shortest Remaining Time First (SRTF), (b) Round Robin with Quantum = 2.
+3. (10 Marks) Implement the classical Producer-Consumer bounded-buffer problem using counting semaphores and mutex locks. Explain how race conditions and deadlocks are prevented.
+4. (10 Marks) Explain Banker's Algorithm for Deadlock Avoidance. Given 5 processes P0-P4 and 3 resource types A, B, C with Allocation and Max matrices, determine if the system is in a safe state and output the safe sequence.
+5. (15 Marks) (a) Explain Paging with Translation Lookaside Buffer (TLB). Calculate Effective Memory Access Time (EMAT) if TLB access time is 20ns, Main Memory access time is 100ns, and TLB Hit Ratio is 90%.
+   (b) Simulate FIFO, LRU, and Optimal Page Replacement for page reference string: 7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2 with 3 memory frames. Count total page faults for each.

@@ -1,0 +1,23 @@
+MASSACHUSETTS INSTITUTE OF TECHNOLOGY / IIT DELHI
+Department of Computer Science and Engineering
+CS201: Data Structures and Algorithms - End-Semester Exam 2024
+Time Allowed: 3 Hours | Maximum Marks: 100
+
+SECTION A: Short Conceptual Questions (5 x 4 = 20 Marks)
+1. Define the Master Theorem for divide-and-conquer recurrences. State the three standard cases with mathematical formulations.
+2. What is the difference between an AVL Tree and a Red-Black Tree in terms of balance factor and rotation frequency during deletions?
+3. Prove why comparison-based sorting algorithms cannot beat Omega(N log N) worst-case time complexity.
+4. Explain the concept of amortized time complexity with an example of dynamic array doubling.
+5. In Dijkstra's single-source shortest path algorithm, why are negative edge weights not supported? What algorithm solves this?
+
+SECTION B: Analytical and Proof Problems (4 x 10 = 40 Marks)
+6. (a) Construct an AVL Tree by inserting the keys in order: 45, 12, 89, 34, 70, 23, 9, 55, 61.
+   (b) Show every single and double rotation (LL, RR, LR, RL) performed during the insertions.
+7. Design an optimal Dynamic Programming algorithm for the 0/1 Knapsack Problem with weights W = [2, 3, 4, 5] and values V = [3, 4, 5, 6] for capacity C = 8. Show the complete DP table.
+8. (a) Formulate the Bellman-Ford shortest path algorithm and trace it on a 5-node directed graph.
+   (b) How does Bellman-Ford detect negative weight cycles reachable from the source?
+9. Explain Huffman Coding data compression. Given character frequencies {A: 0.35, B: 0.10, C: 0.20, D: 0.20, E: 0.15}, construct the optimal prefix Huffman Tree and compute the average code length.
+
+SECTION C: Design and Implementation Problems (2 x 20 = 40 Marks)
+10. Given a stream of integers arriving continuously in real-time, design an efficient data structure to find the Median of numbers at any moment with O(log N) insertion and O(1) query time. Prove correctness using a Min-Heap and Max-Heap pairing.
+11. Design an algorithm to detect whether a directed graph contains a cycle using Depth First Search (DFS) with 3-color vertex marking (WHITE, GRAY, BLACK). Provide complete pseudo-code and prove time complexity O(V + E).

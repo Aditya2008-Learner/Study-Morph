@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script type="application/json" data-od-external-dependencies>["https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js","https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css","https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js","https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap"]</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyMorph — AI Study Hub for BTech Engineering</title>
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- KaTeX for crisp mathematical formula rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        /* OD Layout Primitives v1 */
+        @layer od-layout {
+            :where(.od-stack,.od-row,.od-row-top,.od-cluster,.od-grid,.od-field,.od-stat,.od-cell,.od-tile) > :where(*) { min-width: 0; }
+            .od-stack   { display: flex; flex-direction: column; gap: var(--od-gap, 8px); }
+            .od-row     { display: flex; align-items: center; gap: var(--od-gap, 8px); }
+            .od-row-top { display: flex; align-items: flex-start; gap: var(--od-gap, 8px); }
+            .od-cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--od-gap, 8px); }
+            .od-fill    { flex: 1 1 0; min-width: 0; }
+            .od-fixed   { flex: none; }
+            .od-grid    { display: grid; gap: var(--od-gap, 16px); grid-template-columns: repeat(var(--od-cols, 3), minmax(0, 1fr)); }
+            .od-stat, .od-field, .od-cell { display: grid; gap: var(--od-gap, 2px); }
+            :where(.od-stat,.od-field,.od-cell) > :where(*) { display: block; }
+            .od-tile { display: grid; grid-template-rows: auto 1fr; }
+            :where(.od-tile) > :where(*) { display: block; }
+            .od-media { display: block; width: 100%; height: auto; aspect-ratio: var(--od-ratio, auto); }
+            .od-media-cover { object-fit: cover; }
+            .od-truncate { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+            .od-clamp-2, .od-clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+            .od-clamp-2 { -webkit-line-clamp: 2; }
+            .od-clamp-3 { -webkit-line-clamp: 3; }
+            .od-lines-2 { min-height: calc(2 * 1.4em); }
+            .od-nowrap  { white-space: nowrap; }
+            .od-keep    { word-break: keep-all; overflow-wrap: anywhere; }
+            .od-screen { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; }
+            .od-scroll { overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+            .od-rail { display: flex; gap: var(--od-gap, 8px); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+                        padding-inline: var(--od-rail-pad, 16px); scroll-padding-inline: var(--od-rail-pad, 16px); }
+            .od-rail::-webkit-scrollbar { display: none; }
+            :where(.od-rail) > :where(*) { flex: none; scroll-snap-align: start; }
+            :where(.od-rail) > :where(:last-child) { margin-inline-end: var(--od-rail-pad, 16px); }
+            .od-spacer { flex: none; visibility: hidden; pointer-events: none; }
+            .od-touch  { min-width: 44px; min-height: 44px; }
+        }
+
+        :root {
+            --primary: #111827;
+            --primary-accent: #111827;
+            --primary-light: #F3F4F6;
+            --text-heading: #111827;
+            --text-body: #374151;
+            --text-muted: #6B7280;
+            --text-subtle: #9CA3AF;
+            --bg-canvas: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --border-subtle: #E5E7EB;
+            --border-strong: #D1D5DB;
+            --accent-emerald: #059669;
+            --accent-emerald-bg: #ECFDF5;
+            --accent-violet: #374151;
+            --accent-violet-bg: #F3F4F6;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+            --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-display: 'Space Grotesk', var(--font-sans);
+            --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-canvas);
+            color: var(--text-body);
+            line-height: 1.55;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        .site-shell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1160px;
+            padding: 0 24px;
+            margin: 0 auto;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4 {
+            font-family: var(--font-display);
+            color: var(--text-heading);
+            letter-spacing: -0.025em;
+            font-weight: 700;
+        }
+
+        p {
+            color: var(--text-muted);
+        }
+
+        .mono-tag {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        /* Standardized SVG Icons */
+        .icon {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            stroke-width: 1.75;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+        .icon-sm { width: 14px; height: 14px; }
+        .icon-md { width: 20px; height: 20px; }
+        .icon-lg { width: 24px; height: 24px; stroke-width: 1.5; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 9px 18px;
+            border-radius: var(--radius-md);
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 180ms ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background-color: #0F172A;
+            color: #FFFFFF;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+        }
+        .btn-primary:hover {
+            background-color: #1E293B;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+        }
+
+        .btn-brand {
+            background-color: #0F172A;
+            color: #FFFFFF;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.3);
+        }
+        .btn-brand:hover {
+            background-color: #1E293B;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(15, 23, 42, 0.25);
+        }
+
+        .btn-secondary {
+            background-color: #FFFFFF;
+            color: #0F172A;
+            border: 1px solid var(--border-strong);
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-secondary:hover {
+            background-color: #F8FAFC;
+            border-color: #0F172A;
+            transform: translateY(-1px);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 6px 12px;
+        }
+        .btn-ghost:hover {
+            background: #F1F5F9;
+            color: var(--text-heading);
+        }
+
+        .btn-icon {
+            padding: 6px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            background: #FFFFFF;
+            border: 1px solid var(--border-subtle);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 150ms ease;
+            color: var(--text-muted);
+        }
+        .btn-icon:hover:not(:disabled) {
+            background: #F1F5F9;
+            color: var(--text-heading);
+            border-color: var(--border-strong);
+        }
+        .btn-icon:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #F8FAFC;
+        }
+
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 0.8125rem;
+        }
+
+        /* 1. Navigation Bar */
+        .navbar-wrapper {
+            width: 100%;
+            border-bottom: 1px solid var(--border-subtle);
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .brand-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-heading);
+            font-family: var(--font-display);
+            font-size: 1.1875rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-logo-badge {
+            width: 30px;
+            height: 30px;
+            border-radius: var(--radius-sm);
+            background-color: var(--text-heading);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 150ms ease;
+        }
+        .nav-links a:hover {
+            color: var(--primary-accent);
+        }
+
+        /* 2. Hero Section */
+        .hero-section {
+            padding: 88px 0 64px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+        }
+
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 14px;
+            border-radius: 9999px;
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-subtle);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .pill-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--primary-accent);
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            line-height: 1.12;
+            max-width: 820px;
+            margin-bottom: 20px;
+            letter-spacing: -0.03em;
+        }
+
+        .hero-subtitle {
+            font-size: 1.125rem;
+            line-height: 1.6;
+            max-width: 680px;
+            margin-bottom: 36px;
+            color: var(--text-muted);
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        /* 3. Features Section */
+        .features-section {
+            padding: 64px 0 72px;
+            width: 100%;
+        }
+
+        .section-heading-wrap {
+            text-align: center;
+            max-width: 640px;
+            margin: 0 auto 48px;
+        }
+
+        .section-tag {
+            color: var(--primary-accent);
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .section-title {
+            font-size: 2.125rem;
+            margin-bottom: 12px;
+        }
+
+        .section-desc {
+            font-size: 1.0625rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .feature-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 32px 28px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            box-shadow: var(--shadow-sm);
+            transition: all 200ms ease;
+            position: relative;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-strong);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .feature-icon-wrapper {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            background-color: var(--primary-light);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            color: var(--primary-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.1875rem;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            font-size: 0.90625rem;
+            line-height: 1.55;
+            color: var(--text-muted);
+        }
+
+        /* 4. All Courses Section */
+        .courses-section {
+            padding: 64px 0 80px;
+            width: 100%;
+            background-color: #FFFFFF;
+            border-top: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .course-card {
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 24px 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            box-shadow: var(--shadow-sm);
+            transition: all 180ms ease;
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+            min-width: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .course-card:hover {
+            border-color: #0F172A;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .course-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            background-color: #F1F5F9;
+            border: 1px solid var(--border-subtle);
+            color: #0F172A;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 14px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .course-card h3 {
+            font-family: var(--font-display);
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 8px;
+            line-height: 1.35;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+            max-width: 100%;
+        }
+
+        .course-meta {
+            font-size: 0.84375rem;
+            color: #64748B;
+            line-height: 1.5;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+            max-width: 100%;
+            margin-top: 4px;
+        }
+
+        /* 4. Interactive Workspace */
+        .workspace-section {
+            padding: 32px 0 96px;
+            width: 100%;
+        }
+
+        .app-window {
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            width: 100%;
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .window-header {
+            background-color: #F8FAFC;
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .window-dots {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .window-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #CBD5E1;
+        }
+        .window-dot:nth-child(1) { background-color: #F87171; }
+        .window-dot:nth-child(2) { background-color: #FBBF24; }
+        .window-dot:nth-child(3) { background-color: #34D399; }
+
+        .window-title {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .app-body {
+            padding: 32px 32px 48px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+            background-color: #F9FAFB;
+        }
+
+        /* Editor Panel */
+        .input-panel {
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .panel-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .panel-top-row label {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-heading);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sample-presets {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .preset-chip {
+            background: #F8FAFC;
+            border: 1px solid var(--border-subtle);
+            border-radius: 9999px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 150ms ease;
+        }
+        .preset-chip:hover, .preset-chip.active {
+            background-color: #0F172A;
+            border-color: #0F172A;
+            color: #FFFFFF;
+        }
+
+        .editor-textarea {
+            width: 100%;
+            height: 120px;
+            padding: 16px;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 0.9375rem;
+            color: var(--text-heading);
+            background-color: #FFFFFF;
+            resize: vertical;
+            line-height: 1.5;
+            transition: border-color 150ms ease;
+        }
+        .editor-textarea:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .input-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .char-counter {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-subtle);
+        }
+
+        /* Split Screen Output Panels */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+        }
+
+        /* --- Structured Summary Panel --- */
+        .summary-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .panel-heading {
+            font-size: 1.0625rem;
+            font-weight: 600;
+            color: var(--text-heading);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border-subtle);
+        }
+
+        .summary-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .summary-card {
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            transition: transform 150ms ease, box-shadow 150ms ease;
+        }
+        .summary-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+            border-color: var(--border-strong);
+        }
+
+        .summary-tag {
+            display: inline-block;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary-accent);
+            background-color: var(--primary-light);
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .summary-content {
+            font-size: 0.9375rem;
+            color: var(--text-body);
+            line-height: 1.6;
+        }
+
+        .summary-content strong {
+            color: var(--text-heading);
+        }
+
+        /* Clean Math formula box inside summary and practice deck */
+        .formula-box,
+        .formula-pill,
+        .formula-tag,
+        .fc-answer .math-block,
+        .math-block {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #F9FAFB;
+            border: 1px solid var(--border-subtle);
+            padding: 6px 12px;
+            border-radius: 8px;
+            margin: 6px 0;
+            color: var(--text-heading);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+            font-size: 0.9375rem;
+            line-height: 1.4;
+        }
+
+        .fc-answer .math-block,
+        .math-block {
+            display: flex;
+            width: fit-content;
+            margin: 12px auto;
+            padding: 8px 18px;
+            font-size: 1.0625rem;
+        }
+
+        /* --- Flashcard Deck Panel --- */
+        .deck-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: 100%;
+        }
+
+        .deck-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .deck-counter {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: #E2E8F0;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+
+        .flashcard-3d-wrapper {
+            perspective: 1000px;
+            width: 100%;
+            height: 100%;
+            min-height: 280px;
+            position: relative;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .flashcard-inner.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .fc-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--radius-lg);
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), inset 0 2px 0 0 rgba(255,255,255,0.7);
+        }
+
+        /* Front specific */
+        .fc-front {
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-strong);
+            border-bottom-width: 3px;
+        }
+
+        .fc-badge {
+            position: absolute;
+            top: 20px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-subtle);
+        }
+
+        .fc-question {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-heading);
+            line-height: 1.4;
+            max-width: 90%;
+        }
+
+        .fc-hint-action {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--primary-accent);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--primary-light);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            opacity: 0.8;
+            transition: opacity 200ms;
+        }
+        .flashcard-inner:hover .fc-hint-action {
+            opacity: 1;
+        }
+
+        /* Back specific */
+        .fc-back {
+            background-color: #F8FAFC;
+            border: 1px solid var(--border-focus);
+            border-bottom-width: 3px;
+            transform: rotateY(180deg);
+        }
+
+        .fc-answer {
+            font-size: 1rem;
+            color: var(--text-body);
+            line-height: 1.6;
+            width: 100%;
+        }
+
+        .deck-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 16px;
+            padding: 0 4px;
+        }
+
+        .deck-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .deck-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--border-strong);
+            transition: all 200ms ease;
+            cursor: pointer;
+        }
+        .deck-dot.active {
+            background-color: var(--primary-accent);
+            width: 16px;
+            border-radius: 4px;
+        }
+
+        /* 5. Minimalist Footer */
+        .site-footer {
+            width: 100%;
+            border-top: 1px solid var(--border-subtle);
+            background-color: #FFFFFF;
+            padding: 48px 0;
+            margin-top: auto;
+        }
+
+        .footer-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 20px;
+        }
+
+        .footer-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            background-color: #F8FAFC;
+            border: 1px solid var(--border-subtle);
+            border-radius: 9999px;
+            color: var(--text-muted);
+        }
+
+        .footer-nav {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .footer-nav a {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 150ms ease;
+        }
+        .footer-nav a:hover {
+            color: var(--primary-accent);
+        }
+
+        .copyright-text {
+            font-size: 0.8125rem;
+            color: var(--text-subtle);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 860px) {
+            .hero-title { font-size: 2.625rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .workspace-grid { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+            .panel-top-row { flex-direction: column; align-items: flex-start; }
+            .flashcard-3d-wrapper { min-height: 240px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="site-shell">
+        <!-- 1. Navigation Bar -->
+        <header class="navbar-wrapper">
+            <div class="container">
+                <nav class="navbar">
+                    <a href="#" class="brand-link">
+                        <span class="brand-logo-badge">
+                            <svg class="icon icon-sm" viewBox="0 0 24 24">
+                                <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor"/>
+                            </svg>
+                        </span>
+                        <span>StudyMorph</span>
+                    </a>
+                    <ul class="nav-links">
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#dashboard">Workspace</a></li>
+                        <li><a href="#courses">Courses</a></li>
+                    </ul>
+                    <div>
+                        <!-- Launch App button removed per user direction -->
+                    </div>
+                </nav>
+            </div>
+        </header>
+
+        <!-- 2. Hero Section -->
+        <section class="container">
+            <div class="hero-section">
+                <h1 class="hero-title">Cut through the noise.<br>Ace your semester.</h1>
+                <p class="hero-subtitle">Turn chaotic lecture slides and confusing BTech regulations into bite-sized key points and instant study cards in seconds.</p>
+                <div class="hero-actions">
+                    <button class="btn btn-primary" onclick="scrollToDashboard()">
+                        <span>Get Started Now</span>
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Core Features Grid -->
+        <section class="features-section" id="features">
+            <div class="container">
+                <div class="section-heading-wrap">
+                    <span class="mono-tag section-tag">How it works</span>
+                    <h2 class="section-title">Built by students, for students.</h2>
+                    <p class="section-desc">Designed to help you navigate engineering courses, complex math, and moving academic targets without the headache.</p>
+                </div>
+                
+                <div class="features-grid">
+                    <!-- Feature 1 -->
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <svg class="icon icon-md" viewBox="0 0 24 24">
+                                <line x1="21" y1="6" x2="3" y2="6"/>
+                                <line x1="15" y1="12" x2="3" y2="12"/>
+                                <line x1="17" y1="18" x2="3" y2="18"/>
+                            </svg>
+                        </div>
+                        <h3>1. Quick Summaries</h3>
+                        <p>Get the high-yield stuff without reading 40-page PDFs. We preserve your complex formulas perfectly using native math styling.</p>
+                    </div>
+
+                    <!-- Feature 2 -->
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <svg class="icon icon-md" viewBox="0 0 24 24">
+                                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                <path d="M7 15h10M7 9h6"/>
+                            </svg>
+                        </div>
+                        <h3>2. Smart Flashcards</h3>
+                        <p>Test yourself before exams. We auto-generate a deck of interactive mock questions based exactly on what your professor taught.</p>
+                    </div>
+
+                    <!-- Feature 3 -->
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <svg class="icon icon-md" viewBox="0 0 24 24">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                <path d="M9 12l2 2 4-4"/>
+                            </svg>
+                        </div>
+                        <h3>3. Regulation Tracker</h3>
+                        <p>Stay on top of attendance rules, grading curves, and credit requirements for the BTech curriculum automatically.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Interactive Workspace -->
+        <section class="workspace-section" id="dashboard">
+            <div class="container">
+                <div class="section-heading-wrap">
+                    <span class="mono-tag section-tag">Live Preview</span>
+                    <h2 class="section-title">Try the Engine</h2>
+                    <p class="section-desc">Paste sample text below to see how we clean it up and build your study kit.</p>
+                </div>
+
+                <div class="app-window">
+                    <!-- Window Topbar -->
+                    <div class="window-header">
+                        <div class="window-dots">
+                            <div class="window-dot"></div>
+                            <div class="window-dot"></div>
+                            <div class="window-dot"></div>
+                        </div>
+                        <div class="window-title">
+                            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            <span>studymorph-kernel // v2.0-btech</span>
+                        </div>
+                        <div style="width: 48px;"></div>
+                    </div>
+
+                    <div class="app-body">
+                        <!-- Input Panel -->
+                        <div class="input-panel">
+                            <div class="panel-top-row">
+                                <label for="lectureInput">
+                                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                    <span>Paste your raw notes here</span>
+                                </label>
+                                <div class="sample-presets">
+                                    <span class="preset-label">Load sample:</span>
+                                    <button class="preset-chip active" onclick="loadSampleData('thermo', this)">Thermodynamics</button>
+                                    <button class="preset-chip" onclick="loadSampleData('os', this)">OS & Threads</button>
+                                    <button class="preset-chip" onclick="loadSampleData('dsa', this)">Data Structures</button>
+                                </div>
+                            </div>
+                            <textarea id="lectureInput" class="editor-textarea" placeholder=""></textarea>
+                            <div class="input-actions">
+                                <span class="char-counter" id="charCounter">Ready</span>
+                                <button class="btn btn-brand" onclick="generateStudyKit()">
+                                    <span>Generate Study Kit</span>
+                                    <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Spaced Output Panels -->
+                        <div class="workspace-grid">
+                            
+                            <!-- Left: Spacious Summary Cards -->
+                            <div class="summary-panel">
+                                <div class="panel-heading">
+                                    <svg class="icon icon-md" style="color: var(--primary-accent);" viewBox="0 0 24 24"><path d="M4 6h16M4 12h8M4 18h14"/></svg>
+                                    <span>The High-Yield Summary</span>
+                                </div>
+                                <div class="summary-feed" id="summaryContainer">
+                                    <!-- Dynamic clean summary blocks -->
+                                </div>
+                            </div>
+
+                            <!-- Right: True Card Deck Viewer -->
+                            <div class="deck-panel">
+                                <div class="deck-header panel-heading" style="padding-bottom: 0; border-bottom: none;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <svg class="icon icon-md" style="color: var(--accent-violet);" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                                        <span>Practice Deck</span>
+                                    </div>
+                                    <span class="deck-counter" id="deckCounter">Card 1 / 3</span>
+                                </div>
+
+                                <div class="flashcard-3d-wrapper">
+                                    <div class="flashcard-inner" id="flashcardModel" onclick="flipCard()">
+                                        <div class="fc-face fc-front">
+                                            <span class="fc-badge">Question</span>
+                                            <div class="fc-question" id="fcQuestion">Loading deck...</div>
+                                            <div class="fc-hint-action">
+                                                <svg class="icon" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                                                <span>Click to reveal</span>
+                                            </div>
+                                        </div>
+                                        <div class="fc-face fc-back">
+                                            <span class="fc-badge">Answer</span>
+                                            <div class="fc-answer" id="fcAnswer">...</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="deck-controls">
+                                    <button class="btn-icon" onclick="prevCard()" id="btnPrev" aria-label="Previous card">
+                                        <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                                    </button>
+                                    <div class="deck-dots" id="deckDots">
+                                        <div class="deck-dot active"></div>
+                                        <div class="deck-dot"></div>
+                                        <div class="deck-dot"></div>
+                                    </div>
+                                    <button class="btn-icon" onclick="nextCard()" id="btnNext" aria-label="Next card">
+                                        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. All Courses Section -->
+        <section class="courses-section" id="courses">
+            <div class="container">
+                <div class="section-heading-wrap">
+                    <span class="mono-tag section-tag">All Courses</span>
+                    <h2 class="section-title">Course Library</h2>
+                    <p class="section-desc">Browse our complete collection of engineering syllabus modules and subject-specific learning paths.</p>
+                </div>
+                
+                <div class="courses-grid">
+                    <!-- Course Card 1 -->
+                    <div class="course-card" onclick="window.location.href='course.html?course=CS401'">
+                        <div class="course-badge">
+                            <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            <span>Thermodynamics</span>
+                        </div>
+                        <h3>Unit 3: Engineering Thermodynamics</h3>
+                        <p class="course-meta">24 lectures &bull; 4.5 hrs &bull; Entropy, Carnot cycles, efficiency limits &bull; 15 Questions</p>
+                    </div>
+                    <!-- Course Card 2 -->
+                    <div class="course-card" onclick="window.location.href='course.html?course=CS203'">
+                        <div class="course-badge">
+                            <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h10M7 9h6"/></svg>
+                            <span>Operating Systems</span>
+                        </div>
+                        <h3>Module 2: OS Concurrency & Deadlocks</h3>
+                        <p class="course-meta">18 lectures &bull; 3.5 hrs &bull; Coffman conditions, Banker's Algorithm, Semaphores &bull; 15 Questions</p>
+                    </div>
+                    <!-- Course Card 3 -->
+                    <div class="course-card" onclick="window.location.href='course.html?course=CS201'">
+                        <div class="course-badge">
+                            <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h10M7 9h6"/></svg>
+                            <span>Data Structures</span>
+                        </div>
+                        <h3>Algorithms & DSA</h3>
+                        <p class="course-meta">15 lectures &bull; 4.0 hrs &bull; AVL trees, Master Theorem, Hash tables &bull; 15 Questions</p>
+                    </div>
+                    <!-- Course Card 4 -->
+                    <div class="course-card" onclick="window.location.href='course.html?course=MA101'">
+                        <div class="course-badge">
+                            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 2l2 2 4-4"/></svg>
+                            <span>General Engineering</span>
+                        </div>
+                        <h3>Foundational Engineering Math</h3>
+                        <p class="course-meta">20 lectures &bull; 5.0 hrs &bull; Calculus, Linear Algebra, Diff Eq &bull; 15 Questions</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Minimalist Footer -->
+        <footer class="site-footer">
+            <div class="container">
+                <div class="footer-inner">
+                    <div class="footer-badge">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 2l3 6.5L22 9.5l-5 5L18.5 22 12 18.5 5.5 22 7 14.5l-5-5 7-1 3-6.5z"/></svg>
+                        <span>A Hyperthon 2.0 Build</span>
+                    </div>
+                    <nav class="footer-nav">
+                        <a href="#">Architecture</a>
+                        <a href="#">Security</a>
+                        <a href="#">Academic Integrity</a>
+                        <a href="#">Terms & Privacy</a>
+                    </nav>
+                    <p class="copyright-text">© 2026 StudyMorph Team. Built with minimalist precision.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts for dynamic rendering and interactions -->
+    <script>
+        const PRESETS = {
+            thermo: {
+                name: "Thermodynamics",
+                text: "Unit 3 Engineering Thermodynamics: First Law governs Conservation of Energy stating dU = dQ - dW. The Second Law introduces Entropy dS >= dQ/T for all spontaneous cycles. Carnot efficiency represents maximum theoretical limit: eta = 1 - (T_cold / T_hot). Isothermal processes have dT = 0 while Adiabatic processes operate under dQ = 0.",
+                summaries: [
+                    { label: "1. First Law of Thermodynamics", content: "It's all about conservation of energy. Change in your internal energy equals heat supplied minus work done.<br><span class='formula-box math'>\\Delta U = Q - W</span>" },
+                    { label: "2. Second Law & Entropy", content: "In isolated systems, entropy (disorder) is always going up. Spontaneous processes are irreversible.<br><span class='formula-box math'>\\Delta S \\ge \\int \\frac{\\delta Q}{T}</span>" },
+                    { label: "3. Carnot Efficiency Cheat Sheet", content: "This is the absolute theoretical maximum efficiency any heat engine can hit. Remember to use Kelvin!<br><span class='formula-box math'>\\eta_{max} = 1 - \\frac{T_{C}}{T_{H}}</span>" }
+                ],
+                flashcards: [
+                    { q: "What's the core formula for the First Law of Thermodynamics?", a: "That's conservation of energy: <br><span class='math-block'>\\Delta U = Q - W</span><br>Where $\\Delta U$ is internal energy, $Q$ is heat, and $W$ is work." },
+                    { q: "How do you calculate max Carnot Efficiency?", a: "Use the absolute temperatures in Kelvin:<br><span class='math-block'>\\eta_{max} = 1 - \\frac{T_{cold}}{T_{hot}}</span>" },
+                    { q: "What's the difference between Isothermal and Adiabatic?", a: "<strong>Isothermal:</strong> Temperature stays constant ($\\Delta T = 0$).<br><strong>Adiabatic:</strong> No heat enters or leaves the system ($Q = 0$)." }
+                ]
+            },
+            os: {
+                name: "Operating Systems",
+                text: "Module 2 OS Concurrency & Deadlocks: Four Coffman conditions must hold simultaneously for Deadlock: Mutual Exclusion, Hold and Wait, No Preemption, and Circular Wait. Banker's Algorithm determines system safe states with Allocation, Max, and Available resource vectors. Semaphore wait operation is denoted as P(S) while signal is V(S).",
+                summaries: [
+                    { label: "1. The Deadlock Checklist (Coffman)", content: "Watch out—you need <strong>all four</strong> conditions happening at once for a deadlock to occur: Mutual Exclusion, Hold & Wait, No Preemption, and Circular Wait." },
+                    { label: "2. Banker's Algorithm", content: "The safety net algorithm. It checks if the OS can safely grant resources without getting stuck. It calculates safety using:<br><span class='formula-box math'>\\text{Need}_i = \\text{Max}_i - \\text{Allocation}_i</span>" },
+                    { label: "3. Synchronization Basics", content: "Semaphores use standard operations:<br><span class='formula-box math'>P(S)</span> is for wait/decrement.<br><span class='formula-box math'>V(S)</span> is for signal/increment." }
+                ],
+                flashcards: [
+                    { q: "List the 4 holding conditions for a Deadlock.", a: "1. Mutual Exclusion<br>2. Hold and Wait<br>3. No Preemption<br>4. Circular Wait" },
+                    { q: "What is Banker's Algorithm used for?", a: "It's a resource allocation and deadlock avoidance algorithm that tests for safety by simulating the allocation of predetermined maximum possible amounts of all resources." },
+                    { q: "What do P(S) and V(S) stand for in semaphores?", a: "<strong>P(S)</strong>: Proberen (to test/wait), decreases the value.<br><strong>V(S)</strong>: Verhogen (to increment/signal), increases the value." }
+                ]
+            },
+            dsa: {
+                name: "Data Structures",
+                text: "Algorithm Analysis: Master Theorem solves recurrence relations of form T(n) = a*T(n/b) + f(n). Binary Search Tree operations average O(log n) time complexity while worst-case unbalanced traversal degrades to O(n). AVL trees maintain balance factor BF = height(left) - height(right) within {-1, 0, +1}.",
+                summaries: [
+                    { label: "1. Master Theorem Recurrences", content: "Your go-to for divide-and-conquer time complexity. It evaluates relations in the form:<br><span class='formula-box math'>T(n) = a T(n/b) + f(n)</span>" },
+                    { label: "2. AVL Tree Balance Factor", content: "To stay balanced, every node's children must follow this strict height rule:<br><span class='formula-box math'>\\text{BF} = h(\\text{left}) - h(\\text{right}) \\in \\{-1, 0, 1\\}</span>" },
+                    { label: "3. Quick Big-O Reminders", content: "A healthy BST runs in <span class='math'>\\mathcal{O}(\\log n)</span>. An unbalanced one degrades to a straight line linked-list making it <span class='math'>\\mathcal{O}(n)</span>." }
+                ],
+                flashcards: [
+                    { q: "What's the general formula for Master Theorem?", a: "It solves recurrences that look like this:<br><span class='math-block'>T(n) = a T\\left(\\frac{n}{b}\\right) + f(n)</span>" },
+                    { q: "How is an AVL Tree's Balance Factor (BF) calculated?", a: "It's the height difference between the left and right subtrees:<br><span class='math-block'>BF = h(left) - h(right)</span><br>It must always be -1, 0, or 1." },
+                    { q: "Why would a Binary Search Tree hit O(n) worst-case time?", a: "If the tree becomes completely unbalanced (like inserting already sorted data), it basically acts like a linear linked list." }
+                ]
+            }
+        };
+
+        let currentDeck = [];
+        let cardIndex = 0;
+
+        function scrollToDashboard() {
+            document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function loadSampleData(key, el) {
+            const data = PRESETS[key];
+            if (!data) return;
+
+            document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+            if (el && el.classList) {
+                el.classList.add('active');
+            } else if (typeof event !== 'undefined' && event && event.target && event.target.classList) {
+                event.target.classList.add('active');
+            } else {
+                const matchingChip = Array.from(document.querySelectorAll('.preset-chip')).find(c => {
+                    const attr = c.getAttribute('onclick') || '';
+                    return attr.includes(`'${key}'`) || attr.includes(`"${key}"`);
+                });
+                if (matchingChip) matchingChip.classList.add('active');
+            }
+
+            const input = document.getElementById('lectureInput');
+            if (input) {
+                input.value = data.text;
+            }
+            const counter = document.getElementById('charCounter');
+            if (counter) {
+                counter.textContent = `${data.text.length} characters`;
+            }
+            
+            renderStudyKit(data.summaries, data.flashcards);
+        }
+
+        function generateStudyKit() {
+            const val = document.getElementById('lectureInput').value.trim();
+            if (!val) {
+                alert('Please input your lecture text or select a syllabus sample.');
+                return;
+            }
+
+            // Generate fallback response if they typed custom text
+            const summaries = [
+                { 
+                    label: "1. Core Academic Concept", 
+                    content: `Here's what this module is actually about: <strong>${val.slice(0, 40)}...</strong>` 
+                },
+                { 
+                    label: "2. Key Mathematical Constraint", 
+                    content: `Make sure you memorise the main formula: <br><span class='formula-box math'>f(x) = \\sum_{i=1}^n x_i</span>` 
+                },
+                { 
+                    label: "3. Exam Watchout", 
+                    content: "This derivation frequently pops up in End-Semester long-answer sections." 
+                }
+            ];
+
+            const flashcards = [
+                { q: `What is the core takeaway from this lecture segment?`, a: `It primarily focuses on defining bounds for: ${val.slice(0, 50)}...` },
+                { q: `Which foundational equations are needed here?`, a: `You need to understand:<br><span class='math-block'>\\oint B \\cdot dl = \\mu_0 I</span>` },
+                { q: `Are there constraints to remember?`, a: `Yes, always check the boundary conditions before applying the derivation.` }
+            ];
+
+            // Clean active preset state
+            document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+            renderStudyKit(summaries, flashcards);
+        }
+
+        function renderStudyKit(summaries, flashcards) {
+            const sumContainer = document.getElementById('summaryContainer');
+            
+            // Render beautiful spaced summary cards
+            sumContainer.innerHTML = summaries.map(s => `
+                <div class="summary-card">
+                    <span class="summary-tag">${s.label}</span>
+                    <div class="summary-content">${s.content}</div>
+                </div>
+            `).join('');
+
+            // Initialize Card Deck
+            currentDeck = flashcards;
+            cardIndex = 0;
+            updateDeckView();
+
+            // Fire KaTeX
+            renderEquations();
+        }
+
+        // --- Flashcard Deck Interactions ---
+
+        function flipCard() {
+            const el = document.getElementById('flashcardModel');
+            el.classList.toggle('flipped');
+        }
+
+        function nextCard() {
+            if (cardIndex < currentDeck.length - 1) {
+                // Ensure card turns face up before transitioning content
+                document.getElementById('flashcardModel').classList.remove('flipped');
+                setTimeout(() => {
+                    cardIndex++;
+                    updateDeckView();
+                    renderEquations();
+                }, 150);
+            }
+        }
+
+        function prevCard() {
+            if (cardIndex > 0) {
+                document.getElementById('flashcardModel').classList.remove('flipped');
+                setTimeout(() => {
+                    cardIndex--;
+                    updateDeckView();
+                    renderEquations();
+                }, 150);
+            }
+        }
+
+        function updateDeckView() {
+            if (currentDeck.length === 0) return;
+            const current = currentDeck[cardIndex];
+            
+            // Populate card contents
+            document.getElementById('fcQuestion').innerHTML = current.q;
+            document.getElementById('fcAnswer').innerHTML = current.a;
+            
+            // Update counter + dots
+            document.getElementById('deckCounter').textContent = `Card ${cardIndex + 1} of ${currentDeck.length}`;
+            
+            const dotsContainer = document.getElementById('deckDots');
+            dotsContainer.innerHTML = currentDeck.map((_, i) => `
+                <div class="deck-dot ${i === cardIndex ? 'active' : ''}"></div>
+            `).join('');
+
+            // Nav buttons state
+            document.getElementById('btnPrev').disabled = (cardIndex === 0);
+            document.getElementById('btnNext').disabled = (cardIndex === currentDeck.length - 1);
+        }
+
+        function renderEquations() {
+            if (window.renderMathInElement) {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: "$$", right: "$$", display: true },
+                        { left: "$", right: "$", display: false },
+                        { left: "\\(", right: "\\)", display: false },
+                        { left: "\\[", right: "\\]", display: true }
+                    ],
+                    throwOnError: false
+                });
+
+                document.querySelectorAll('.math').forEach(el => {
+                    if (!el.dataset.rendered) {
+                        try { katex.render(el.textContent, el, { throwOnError: false, displayMode: false }); el.dataset.rendered = "true"; } catch(e) {}
+                    }
+                });
+
+                document.querySelectorAll('.math-block').forEach(el => {
+                    if (!el.dataset.rendered && el.textContent.includes('\\')) {
+                        try { katex.render(el.textContent, el, { throwOnError: false, displayMode: true }); el.dataset.rendered = "true"; } catch(e) {}
+                    }
+                });
+            }
+        }
+
+        // Init — field starts empty; only fills on "Load sample"
+        window.addEventListener('DOMContentLoaded', () => {
+            // Clear default value so textarea starts empty
+            document.getElementById('lectureInput').value = '';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Suggested Commands
+- Start server: python run.py
+- Install dependencies: pip install -r requirements.txt
+- Rebuild database (questions + interactive content): python rebuild_db.py
+- Verify backend routes: python audit_backend.py
+- Verify full site: python audit_site.py
+- Verify study fix: python verify_study_fix.py
+- Verify final state: python verify_final.py
+- Check scroll animation: python check_scroll.py
+- Check question bank lookup: python check_qb_lookup.py
+- Check index.html integrity: python check_index.py
+- Check database schema: python check_db.py
+- Restart server (clean): python restart_clean.py
+- Show C-core DLL size: ls -lh src/c_core/libstudyc.dll

@@ -1,0 +1,10 @@
+CARNEGIE MELLON UNIVERSITY / IIT BOMBAY
+Department of AI and Computer Science
+CS402: Machine Learning - Final Examination 2024
+Total Marks: 100 | Time: 3 Hours
+
+1. (15 Marks) Derive the analytical Normal Equation for Ordinary Least Squares (OLS) Linear Regression: w = (X^T X)^{-1} X^T y. Explain when Gradient Descent is preferred over the closed-form solution.
+2. (15 Marks) Explain the Bias-Variance Tradeoff mathematically. How do L1 (Lasso) and L2 (Ridge) regularizations influence model complexity and sparsity?
+3. (20 Marks) Formulate the Soft-Margin Support Vector Machine (SVM) optimization problem in primal and dual form. Explain the role of Lagrange Multipliers and Kernel Trick (RBF Kernel).
+4. (25 Marks) Derive the Backpropagation algorithm for a 3-layer Multi-Layer Perceptron (MLP) with Cross-Entropy Loss and Softmax activation. Show chain rule derivations for weight updates.
+5. (25 Marks) Explain the Multi-Head Self-Attention mechanism in the Transformer architecture. Derive Attention(Q, K, V) = softmax(Q K^T / sqrt(d_k)) V and explain the computational complexity per layer.
