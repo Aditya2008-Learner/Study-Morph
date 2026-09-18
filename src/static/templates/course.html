@@ -662,6 +662,12 @@
                     <!-- Options populated dynamically -->
                 </select>
             </div>
+            <div class="control-group">
+                <span class="control-label">Topic:</span>
+                <select id="topic-select" class="select-input" onchange="onTopicChange(this.value)">
+                    <option value="">All Topics (Full Course)</option>
+                </select>
+            </div>
         </div>
 
         <!-- Mode Switcher Tabs -->
@@ -685,7 +691,6 @@
             <div class="qb-header-bar">
                 <div class="qb-title-wrap">
                     <h2 class="qb-title">15 Curated Subject Questions</h2>
-                    <span class="badge badge-medium" id="current-set-badge">Set 1</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                     <div class="filter-chips">
@@ -695,9 +700,9 @@
                         <button class="filter-chip" onclick="filterDifficulty('Hard', this)">Hard</button>
                         <button class="filter-chip" onclick="filterDifficulty('Advanced', this)">Advanced</button>
                     </div>
-                    <button class="btn btn-secondary btn-sm" onclick="toggleQuestionSet()" id="btn-toggle-set">
-                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                        <span>Switch to Set 2</span>
+                    <button class="btn btn-secondary btn-sm" onclick="refreshQuestions()" id="btn-toggle-set">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        <span>Refresh</span>
                     </button>
                 </div>
             </div>
@@ -781,41 +786,42 @@
     <script>
         // --- Full Curriculum Course Map ---
         const COURSE_METADATA = {
-            "CS101": { name: "Programming in C", semester: 1, year: 1, desc: "Imperative programming, memory layouts, pointers, dynamic memory allocation, and file I/O operations." },
-            "MA101": { name: "Engineering Mathematics I", semester: 1, year: 1, desc: "Linear algebra, matrix ranks, eigenvalues, Cayley-Hamilton theorem, and differential calculus." },
-            "PH101": { name: "Engineering Physics", semester: 1, year: 1, desc: "Classical mechanics, wave equations, physical optics, thermodynamics, and electromagnetism." },
-            "CH101": { name: "Engineering Chemistry", semester: 1, year: 1, desc: "Quantum atomic structure, chemical bonding, electrochemistry, polymers, and green chemistry." },
-            "EE101": { name: "Basic Electrical Engineering", semester: 1, year: 1, desc: "DC circuit analysis, Kirchhoff's laws, Thevenin/Norton network theorems, and AC fundamentals." },
-            "CS102": { name: "Data Structures", semester: 2, year: 1, desc: "Linear structures, trees, AVL trees, binary search trees, hash tables, graphs, and amortized complexity." },
-            "MA102": { name: "Engineering Mathematics II", semester: 2, year: 1, desc: "Multivariable integration, vector calculus, differential equations, and Laplace transforms." },
-            "CS201": { name: "Design & Analysis of Algorithms", semester: 3, year: 2, desc: "Asymptotic complexity, divide and conquer, dynamic programming, greedy methods, and graph algorithms." },
-            "CS202": { name: "Computer Organization & Architecture", semester: 3, year: 2, desc: "Instruction set architecture, pipelining, hazard mitigation, cache memory hierarchy, and I/O interfacing." },
-            "CS203": { name: "Operating Systems", semester: 3, year: 2, desc: "Process concurrency, CPU scheduling, synchronization primitives, deadlocks, paging, and virtual memory." },
-            "CS204": { name: "Database Management Systems", semester: 3, year: 2, desc: "Relational model, SQL querying, normalization (1NF to BCNF), ACID transaction semantics, and indexing." },
-            "CS301": { name: "Computer Networks", semester: 4, year: 2, desc: "OSI and TCP/IP protocol stacks, subnetting, CIDR, distance-vector/link-state routing, and transport protocols." },
-            "CS302": { name: "Object-Oriented Programming", semester: 4, year: 2, desc: "Encapsulation, inheritance, polymorphism, abstract classes, templates/generics, and exception safety." },
-            "CS303": { name: "Theory of Computation", semester: 4, year: 2, desc: "Deterministic/NFA automata, regular languages, context-free grammars, pushdown automata, and Turing machines." },
-            "CS304": { name: "Software Engineering", semester: 4, year: 2, desc: "Software lifecycle models, Agile development, SOLID design principles, design patterns, and unit testing." },
-            "CS401": { name: "Artificial Intelligence", semester: 5, year: 3, desc: "Heuristic search algorithms (A*, IDA*), minimax game playing, propositional logic, and inference engines." },
-            "CS402": { name: "Machine Learning", semester: 5, year: 3, desc: "Supervised and unsupervised learning: linear/logistic regression, SVM, decision trees, clustering, and neural nets." },
-            "CS403": { name: "Web Technologies", semester: 5, year: 3, desc: "Semantic HTML5, CSS layout engines, JavaScript event loop, asynchronous promises, and RESTful API backends." },
-            "CS404": { name: "Cyber Security & Cryptography", semester: 5, year: 3, desc: "CIA triad, symmetric/asymmetric encryption (AES, RSA), SHA hashing, network attacks, and OWASP defenses." },
-            "CS501": { name: "Compiler Design", semester: 6, year: 3, desc: "Lexical tokenization, top-down/bottom-up syntax parsing, syntax-directed translation, and code generation." },
-            "CS502": { name: "Cloud Computing", semester: 6, year: 3, desc: "Cloud delivery models (IaaS/PaaS/SaaS), virtualization, Docker containerization, Kubernetes, and auto-scaling." },
-            "CS503": { name: "Data Science & Analytics", semester: 6, year: 3, desc: "Data wrangling, exploratory data analysis, feature engineering, predictive modeling, and statistical inference." },
-            "CS601": { name: "Deep Learning", semester: 7, year: 4, desc: "Deep feedforward architectures, backpropagation, CNNs for computer vision, RNNs, and attention mechanisms." },
-            "CS602": { name: "Big Data Analytics", semester: 7, year: 4, desc: "Distributed storage with Hadoop HDFS, MapReduce paradigms, Apache Spark in-memory pipelines, and NoSQL stores." },
-            "CS603": { name: "Distributed Systems", semester: 7, year: 4, desc: "RPC mechanisms, Lamport logical clocks, Raft/Paxos consensus algorithms, and CAP theorem trade-offs." },
-            "CS699": { name: "Major Project (Phase 1)", semester: 7, year: 4, desc: "Engineering problem formulation, state-of-the-art literature survey, architectural modeling, and feasibility." },
-            "CS701": { name: "Natural Language Processing", semester: 8, year: 4, desc: "Tokenization, continuous word embeddings, self-attention, Transformer architectures, and LLM fine-tuning." },
-            "CS702": { name: "Technical Interview & System Design", semester: 8, year: 4, desc: "Algorithmic patterns, high-scale distributed system design, microservices, caching, and STAR defense." },
-            "CS799": { name: "Major Project (Phase 2)", semester: 8, year: 4, desc: "System execution, module integration, empirical benchmarking, ablation studies, thesis preparation, and defense." }
+            "CS101": { name: "Programming in C", semester: 1, year: 1, desc: "Imperative programming, memory layouts, pointers, dynamic memory allocation, and file I/O operations.", topics: ["Topic 1: Fundamentals of C & Control Flow", "Topic 2: Pointers & Memory Management", "Topic 3: Arrays & Multi-Dimensional Data", "Topic 4: Functions & Recursion", "Topic 5: Structures, Unions & File I/O"] },
+            "MA101": { name: "Engineering Mathematics I", semester: 1, year: 1, desc: "Linear algebra, matrix ranks, eigenvalues, Cayley-Hamilton theorem, and differential calculus.", topics: ["Topic 1: Linear Algebra & Matrix Ranks", "Topic 2: Eigenvalues & Cayley-Hamilton Theorem", "Topic 3: Differential Calculus & Taylor Series", "Topic 4: Multivariable Integration & Polar Coordinates", "Topic 5: Vector Calculus & Divergence Theorems"] },
+            "PH101": { name: "Engineering Physics", semester: 1, year: 1, desc: "Classical mechanics, wave equations, physical optics, thermodynamics, and electromagnetism.", topics: ["Topic 1: Classical Mechanics & Oscillations", "Topic 2: Physical Optics, Interference & Lasers", "Topic 3: Thermodynamics & Entropy", "Topic 4: Electromagnetism & Maxwell Equations", "Topic 5: Quantum Physics & Wave Mechanics"] },
+            "CH101": { name: "Engineering Chemistry", semester: 1, year: 1, desc: "Quantum atomic structure, chemical bonding, electrochemistry, polymers, and green chemistry.", topics: ["Topic 1: Quantum Atomic Structure & Bonding", "Topic 2: Thermodynamics & Electrochemistry", "Topic 3: Polymers & Engineering Materials", "Topic 4: Water Technology & Corrosion", "Topic 5: Spectroscopic Techniques"] },
+            "EE101": { name: "Basic Electrical Engineering", semester: 1, year: 1, desc: "DC circuit analysis, Kirchhoff's laws, Thevenin/Norton network theorems, and AC fundamentals.", topics: ["Topic 1: DC Circuits & Kirchhoff's Laws", "Topic 2: Network Theorems (Thevenin/Norton)", "Topic 3: AC Fundamentals & Phasors", "Topic 4: Magnetic Circuits & Transformers", "Topic 5: Electrical Machines & Safety"] },
+            "CS102": { name: "Data Structures", semester: 2, year: 1, desc: "Linear structures, trees, AVL trees, binary search trees, hash tables, graphs, and amortized complexity.", topics: ["Topic 1: Arrays, Linked Lists & Stacks", "Topic 2: Binary Search Trees & AVL Trees", "Topic 3: Graph Traversal (BFS/DFS)", "Topic 4: Hash Tables & Collision Resolution", "Topic 5: Heaps, Priority Queues & Sorting"] },
+            "MA102": { name: "Engineering Mathematics II", semester: 2, year: 1, desc: "Multivariable integration, vector calculus, differential equations, and Laplace transforms.", topics: ["Topic 1: Ordinary Differential Equations", "Topic 2: Laplace Transforms & Applications", "Topic 3: Fourier Series & Transforms", "Topic 4: Partial Differential Equations", "Topic 5: Numerical Methods & Optimization"] },
+            "CS201": { name: "Design & Analysis of Algorithms", semester: 3, year: 2, desc: "Asymptotic complexity, divide and conquer, dynamic programming, greedy methods, and graph algorithms.", topics: ["Topic 1: Asymptotic Analysis & Recurrences", "Topic 2: Balanced Trees & AVL Rotations", "Topic 3: Graph Algorithms (Dijkstra/Bellman-Ford)", "Topic 4: Dynamic Programming & Greedy Approaches", "Topic 5: NP-Completeness & Approximation"] },
+            "CS202": { name: "Computer Organization & Architecture", semester: 3, year: 2, desc: "Instruction set architecture, pipelining, hazard mitigation, cache memory hierarchy, and I/O interfacing.", topics: ["Topic 1: Instruction Set Architecture & Addressing", "Topic 2: ALU Design & Arithmetic Circuits", "Topic 3: Pipelining & Hazard Mitigation", "Topic 4: Memory Hierarchy & Cache Design", "Topic 5: I/O Interfacing & Interrupt Handling"] },
+            "CS203": { name: "Operating Systems", semester: 3, year: 2, desc: "Process concurrency, CPU scheduling, synchronization primitives, deadlocks, paging, and virtual memory.", topics: ["Topic 1: Process Management & Inter-Process Communication", "Topic 2: CPU Scheduling (FCFS/SJF/Round Robin)", "Topic 3: Synchronization, Semaphores & Deadlocks", "Topic 4: Memory Management, Paging & TLB", "Topic 5: File Systems & Storage Management"] },
+            "CS204": { name: "Database Management Systems", semester: 3, year: 2, desc: "Relational model, SQL querying, normalization (1NF to BCNF), ACID transaction semantics, and indexing.", topics: ["Topic 1: Relational Model & SQL Querying", "Topic 2: Normalization (1NF to BCNF)", "Topic 3: Transaction Processing & ACID Properties", "Topic 4: Concurrency Control & Recovery", "Topic 5: Indexing & B+ Trees"] },
+            "CS301": { name: "Computer Networks", semester: 4, year: 2, desc: "OSI and TCP/IP protocol stacks, subnetting, CIDR, distance-vector/link-state routing, and transport protocols.", topics: ["Topic 1: OSI & TCP/IP Architecture", "Topic 2: Data Link Layer & MAC Protocols", "Topic 3: Network Layer, IP Addressing & Routing", "Topic 4: Transport Layer (TCP/UDP)", "Topic 5: Application Layer Protocols & DNS"] },
+            "CS302": { name: "Object-Oriented Programming", semester: 4, year: 2, desc: "Encapsulation, inheritance, polymorphism, abstract classes, templates/generics, and exception safety.", topics: ["Topic 1: Classes, Objects & Encapsulation", "Topic 2: Inheritance & Polymorphism", "Topic 3: Abstract Classes & Interfaces", "Topic 4: Exception Handling & Templates", "Topic 5: Design Patterns & Collections"] },
+            "CS303": { name: "Theory of Computation", semester: 4, year: 2, desc: "Deterministic/NFA automata, regular languages, context-free grammars, pushdown automata, and Turing machines.", topics: ["Topic 1: Finite Automata (DFA/NFA)", "Topic 2: Regular Expressions & Pumping Lemma", "Topic 3: Context-Free Grammars & Pushdown Automata", "Topic 4: Turing Machines & Decidability", "Topic 5: Computational Complexity Classes"] },
+            "CS304": { name: "Software Engineering", semester: 4, year: 2, desc: "Software lifecycle models, Agile development, SOLID design principles, design patterns, and unit testing.", topics: ["Topic 1: Software Lifecycle & Agile Scrum", "Topic 2: Requirements Engineering & UML Modeling", "Topic 3: Architecture & SOLID Design Principles", "Topic 4: Testing Methodologies & QA", "Topic 5: Maintenance & DevOps"] },
+            "CS401": { name: "Artificial Intelligence", semester: 5, year: 3, desc: "Heuristic search algorithms (A*, IDA*), minimax game playing, propositional logic, and inference engines.", topics: ["Topic 1: State Space Search & Heuristic Search (A*)", "Topic 2: Adversarial Search & Minimax", "Topic 3: Knowledge Representation & Logic", "Topic 4: Probabilistic Reasoning & Bayes Nets", "Topic 5: Planning & Decision Making"] },
+            "CS402": { name: "Machine Learning", semester: 5, year: 3, desc: "Supervised and unsupervised learning: linear/logistic regression, SVM, decision trees, clustering, and neural nets.", topics: ["Topic 1: Supervised Learning (Regression & Classification)", "Topic 2: Support Vector Machines & Kernels", "Topic 3: Decision Trees & Ensemble Methods", "Topic 4: Unsupervised Learning & Clustering", "Topic 5: Neural Networks & Model Evaluation"] },
+            "CS403": { name: "Web Technologies", semester: 5, year: 3, desc: "Semantic HTML5, CSS layout engines, JavaScript event loop, asynchronous promises, and RESTful API backends.", topics: ["Topic 1: Modern DOM & Asynchronous JavaScript", "Topic 2: RESTful API Design & Express/FastAPI", "Topic 3: Frontend Frameworks & State Management", "Topic 4: Web Security (CORS, XSS, CSRF)", "Topic 5: Performance Optimization & Caching"] },
+            "CS404": { name: "Cyber Security & Cryptography", semester: 5, year: 3, desc: "CIA triad, symmetric/asymmetric encryption (AES, RSA), SHA hashing, network attacks, and OWASP defenses.", topics: ["Topic 1: Security Foundations & CIA Triad", "Topic 2: Symmetric Cryptography (AES, DES)", "Topic 3: Asymmetric Cryptography (RSA, ECC)", "Topic 4: Hashes, Digital Signatures & PKI", "Topic 5: Network Attacks & OWASP Top 10"] },
+            "CS501": { name: "Compiler Design", semester: 6, year: 3, desc: "Lexical tokenization, top-down/bottom-up syntax parsing, syntax-directed translation, and code generation.", topics: ["Topic 1: Lexical Analysis & Tokenization", "Topic 2: Syntax Analysis & Context-Free Parsing", "Topic 3: Syntax-Directed Translation", "Topic 4: Intermediate Code Generation", "Topic 5: Code Optimization & Target Generation"] },
+            "CS502": { name: "Cloud Computing", semester: 6, year: 3, desc: "Cloud delivery models (IaaS/PaaS/SaaS), virtualization, Docker containerization, Kubernetes, and auto-scaling.", topics: ["Topic 1: Cloud Architecture & Delivery Models", "Topic 2: Virtualization & Hypervisors", "Topic 3: Containerization & Docker", "Topic 4: Container Orchestration with Kubernetes", "Topic 5: Cloud Storage & Auto-Scaling"] },
+            "CS503": { name: "Data Science & Analytics", semester: 6, year: 3, desc: "Data wrangling, exploratory data analysis, feature engineering, predictive modeling, and statistical inference.", topics: ["Topic 1: Data Wrangling & Cleaning", "Topic 2: Exploratory Data Analysis & Visualization", "Topic 3: Statistical Hypothesis Testing", "Topic 4: Feature Engineering & Selection", "Topic 5: Predictive Modeling & Time Series"] },
+            "CS601": { name: "Deep Learning", semester: 7, year: 4, desc: "Deep feedforward architectures, backpropagation, CNNs for computer vision, RNNs, and attention mechanisms.", topics: ["Topic 1: Feedforward Networks & Backpropagation", "Topic 2: Convolutional Neural Networks (CNNs)", "Topic 3: Recurrent Neural Networks (RNN/LSTM)", "Topic 4: Attention Mechanisms & Transformers", "Topic 5: Generative Models (GANs/VAEs)"] },
+            "CS602": { name: "Big Data Analytics", semester: 7, year: 4, desc: "Distributed storage with Hadoop HDFS, MapReduce paradigms, Apache Spark in-memory pipelines, and NoSQL stores.", topics: ["Topic 1: Hadoop Architecture & HDFS", "Topic 2: MapReduce Paradigm", "Topic 3: Apache Spark & RDD In-Memory Processing", "Topic 4: NoSQL Databases & Key-Value Stores", "Topic 5: Stream Processing & Real-Time Analytics"] },
+            "CS603": { name: "Distributed Systems", semester: 7, year: 4, desc: "RPC mechanisms, Lamport logical clocks, Raft/Paxos consensus algorithms, and CAP theorem trade-offs.", topics: ["Topic 1: Distributed Architectures & RPC", "Topic 2: Time, Clocks & State Synchronization", "Topic 3: Consensus Protocols (Paxos/Raft)", "Topic 4: Fault Tolerance & Replication", "Topic 5: Distributed Transactions & CAP Theorem"] },
+            "CS699": { name: "Major Project (Phase 1)", semester: 7, year: 4, desc: "Engineering problem formulation, state-of-the-art literature survey, architectural modeling, and feasibility.", topics: ["Topic 1: Problem Formulation & Scope", "Topic 2: Literature Review & Gap Analysis", "Topic 3: System Architecture & Design", "Topic 4: Feasibility Study & Milestones"] },
+            "CS701": { name: "Natural Language Processing", semester: 8, year: 4, desc: "Tokenization, continuous word embeddings, self-attention, Transformer architectures, and LLM fine-tuning.", topics: ["Topic 1: Text Preprocessing & Language Modeling", "Topic 2: Word Embeddings (Word2Vec, GloVe)", "Topic 3: Sequence Tagging & Parsing", "Topic 4: Transformers & Self-Attention", "Topic 5: Pretrained Language Models & Fine-Tuning"] },
+            "CS702": { name: "Technical Interview & System Design", semester: 8, year: 4, desc: "Algorithmic patterns, high-scale distributed system design, microservices, caching, and STAR defense.", topics: ["Topic 1: Data Structures & Algorithmic Patterns", "Topic 2: Distributed System Design & Microservices", "Topic 3: Database Sharding & Caching Strategies", "Topic 4: Concurrency & Scalability Patterns", "Topic 5: Behavioral & System Architecture Defense"] },
+            "CS799": { name: "Major Project (Phase 2)", semester: 8, year: 4, desc: "System execution, module integration, empirical benchmarking, ablation studies, thesis preparation, and defense.", topics: ["Topic 1: Module Implementation & Integration", "Topic 2: Benchmarking & Performance Analysis", "Topic 3: Ablation Study & Empirical Validation", "Topic 4: Technical Documentation & Thesis Defense"] }
         };
 
         let currentCourse = "CS201";
-        let currentSet = 1;
+        let currentTopic = "";
         let loadedQuestions = [];
         let activeDifficultyFilter = "All";
+        let isGenerating = false;
 
         // Quiz state
         let quizQuestions = [];
@@ -823,12 +829,23 @@
         let quizScore = 0;
         let quizAnswers = {};
 
+        function getSessionId() {
+            let sid = localStorage.getItem('sm_session_id');
+            if (!sid) {
+                sid = 'sm_' + Math.random().toString(36).substring(2, 12);
+                localStorage.setItem('sm_session_id', sid);
+            }
+            return sid;
+        }
+
         // --- Initialization ---
         window.addEventListener('DOMContentLoaded', async () => {
             initCourseSelector();
 
             const urlParams = new URLSearchParams(window.location.search);
             const reqCourse = urlParams.get('course') || urlParams.get('subject') || 'CS201';
+            const reqTopic = urlParams.get('topic') || '';
+            if (reqTopic) currentTopic = reqTopic;
             
             // Normalize course key (handle lower/upper and aliases)
             let matchedCode = Object.keys(COURSE_METADATA).find(c => c.toLowerCase() === reqCourse.toLowerCase());
@@ -854,6 +871,24 @@
             }
         }
 
+        function initTopicSelector(code) {
+            const topicSelect = document.getElementById('topic-select');
+            if (!topicSelect) return;
+            topicSelect.innerHTML = '<option value="">All Topics (Full Course)</option>';
+            const info = COURSE_METADATA[code];
+            if (info && info.topics) {
+                info.topics.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    opt.textContent = t;
+                    if (currentTopic && currentTopic === t) {
+                        opt.selected = true;
+                    }
+                    topicSelect.appendChild(opt);
+                });
+            }
+        }
+
         function onSemesterChange() {
             const sem = document.getElementById('semester-select').value;
             const select = document.getElementById('course-select');
@@ -872,12 +907,18 @@
         }
 
         function onCourseChange(code) {
+            currentTopic = "";
             selectCourse(code);
+        }
+
+        async function onTopicChange(topicVal) {
+            currentTopic = topicVal;
+            await loadQuestionsData(false);
         }
 
         async function selectCourse(code) {
             currentCourse = code;
-            const info = COURSE_METADATA[code] || { name: code, semester: 1, year: 1, desc: 'Academic engineering course.' };
+            const info = COURSE_METADATA[code] || { name: code, semester: 1, year: 1, desc: 'Academic engineering course.', topics: [] };
             
             document.getElementById('course-badge').textContent = `${code} \u2022 Year ${info.year} \u2022 Sem ${info.semester}`;
             document.getElementById('course-title').textContent = info.name;
@@ -894,8 +935,10 @@
                 semSelect.value = String(info.semester);
             }
 
-            // Load all 3 sections
-            await loadQuestionsData();
+            initTopicSelector(code);
+
+            // Load sections
+            await loadQuestionsData(false);
             await loadConceptsData();
             initQuizData();
         }
@@ -912,37 +955,61 @@
         }
 
         // --- 1. Question Bank Logic ---
-        async function loadQuestionsData() {
+        async function loadQuestionsData(forceRefresh = false) {
+            if (isGenerating) return;
+            isGenerating = true;
+
             const container = document.getElementById('questions-container');
-            container.innerHTML = '<p style="color:var(--text-muted); padding:20px 0;">Loading 15 verified questions...</p>';
+            const btn = document.getElementById('btn-toggle-set');
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.add('loading');
+                btn.querySelector('span').textContent = forceRefresh ? 'Researching Web...' : 'Generating 15 Questions...';
+            }
+
+            const topicLabel = currentTopic ? currentTopic : (COURSE_METADATA[currentCourse]?.name || currentCourse);
+            container.innerHTML = `<p style="color:var(--text-muted); padding:24px 0;">Searching academic web sources &amp; generating 15 verified questions on <strong>${escapeHtml(topicLabel)}</strong>...</p>`;
 
             try {
-                const res = await fetch(`/api/questions/course/${encodeURIComponent(currentCourse)}?set=${currentSet}`);
+                const sid = getSessionId();
+                const params = new URLSearchParams({
+                    topic: currentTopic || '',
+                    refresh: forceRefresh ? 'true' : 'false',
+                    session_id: sid,
+                    t: Date.now()
+                });
+                const res = await fetch(`/api/questions/course/${encodeURIComponent(currentCourse)}?${params.toString()}`);
                 if (res.ok) {
                     const data = await res.json();
                     loadedQuestions = data.questions || [];
                 } else {
                     loadedQuestions = [];
+                    container.innerHTML = '<p style="color:var(--danger, #e53e3e); padding:24px 0;">Failed to research and generate questions. Please click Refresh to try again.</p>';
                 }
             } catch (e) {
                 loadedQuestions = [];
+                container.innerHTML = '<p style="color:var(--danger, #e53e3e); padding:24px 0;">Network error while contacting research engine. Please click Refresh to try again.</p>';
+            } finally {
+                isGenerating = false;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('loading');
+                    btn.querySelector('span').textContent = 'Refresh';
+                }
             }
 
             if (loadedQuestions.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted); padding:20px 0;">No questions available for this course set.</p>';
+                container.innerHTML = '<p style="color:var(--text-muted); padding:20px 0;">No questions available. Click Refresh to generate a fresh set.</p>';
                 return;
             }
 
             renderQuestions();
         }
 
-        function toggleQuestionSet() {
-            currentSet = currentSet === 1 ? 2 : 1;
-            document.getElementById('current-set-badge').textContent = `Set ${currentSet}`;
-            const btn = document.getElementById('btn-toggle-set');
-            btn.querySelector('span').textContent = `Switch to Set ${currentSet === 1 ? 2 : 1}`;
-            loadQuestionsData();
+        async function refreshQuestions() {
+            await loadQuestionsData(true);
         }
+        const toggleQuestionSet = refreshQuestions;
 
         function filterDifficulty(diff, btn) {
             activeDifficultyFilter = diff;
@@ -961,7 +1028,7 @@
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<p style="color:var(--text-muted); padding:24px 0;">No ${activeDifficultyFilter} questions in Set ${currentSet}.</p>`;
+                container.innerHTML = `<p style="color:var(--text-muted); padding:24px 0;">No ${escapeHtml(activeDifficultyFilter)} questions in this generated 15-question set.</p>`;
                 return;
             }
 

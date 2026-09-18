@@ -20,6 +20,8 @@ from src.c_core.c_bridge import (
     fast_bm25_term_score,
     fast_hash_string
 )
+from src.backend.web_question_engine import WebQuestionEngine
+from src.backend.question_bank_api import get_course_questions, refresh_course_questions
 from src.backend.app import (
     app,
     search_pyq,
@@ -30,6 +32,65 @@ from src.backend.app import (
     get_topic_content,
     batch_export
 )
+
+
+class TestWebQuestionEngine(unittest.TestCase):
+    def test_generate_15_questions(self):
+        res = WebQuestionEngine.generate_questions("CS201", "Design & Analysis of Algorithms", "Asymptotic Analysis", session_id="test_s1")
+        self.assertEqual(res["total"], 15)
+        self.assertEqual(len(res["questions"]), 15)
+        for q in res["questions"]:
+            self.assertIn("question_text", q)
+            self.assertIn("difficulty", q)
+            self.assertIn("marks", q)
+            self.assertIn("id", q)
+
+    def test_refresh_generates_distinct_sets(self):
+        sess_id = "test_refresh_sess"
+        set_a = WebQuestionEngine.generate_questions("CS101", "Programming in C", "Topic 1: Fundamentals of C", session_id=sess_id, force_refresh=False)
+        self.assertEqual(len(set_a["questions"]), 15)
+
+        set_b = WebQuestionEngine.generate_questions("CS101", "Programming in C", "Topic 1: Fundamentals of C", session_id=sess_id, force_refresh=True)
+        self.assertEqual(len(set_b["questions"]), 15)
+
+        texts_a = [q["question_text"] for q in set_a["questions"]]
+        texts_b = [q["question_text"] for q in set_b["questions"]]
+        
+        # Verify Set A and Set B are distinct
+        overlap = set(texts_a).intersection(set(texts_b))
+        self.assertEqual(len(overlap), 0, "Refresh produced duplicate questions across consecutive sets")
+
+    def test_topic_change_generates_specific_questions(self):
+        sess_id = "test_topic_sess"
+        res_topic1 = WebQuestionEngine.generate_questions("CS101", "Programming in C", "Topic 1: Fundamentals of C", session_id=sess_id)
+        res_topic2 = WebQuestionEngine.generate_questions("PH101", "Engineering Physics", "Topic 2: Physical Optics & Lasers", session_id=sess_id)
+        
+        self.assertEqual(len(res_topic1["questions"]), 15)
+        self.assertEqual(len(res_topic2["questions"]), 15)
+        self.assertEqual(res_topic1["course_code"], "CS101")
+        self.assertEqual(res_topic2["course_code"], "PH101")
+
+
+class TestCoursePageIntegrity(unittest.TestCase):
+    def setUp(self):
+        course_path = os.path.join(ROOT_DIR, "src", "static", "templates", "course.html")
+        with open(course_path, "r", encoding="utf-8") as f:
+            self.course_html = f.read()
+
+    def test_set1_badge_removed(self):
+        # Requirement 1: Remove "Set 1" blue icon/badge completely
+        self.assertNotIn('id="current-set-badge"', self.course_html)
+        self.assertNotIn('>Set 1<', self.course_html)
+
+    def test_switch_set2_changed_to_refresh(self):
+        # Requirement 2: Change "Switch Set 2" to "Refresh"
+        self.assertNotIn('Switch to Set 2', self.course_html)
+        self.assertNotIn('Switch Set 2', self.course_html)
+        self.assertIn('<span>Refresh</span>', self.course_html)
+
+    def test_topic_selector_present(self):
+        # Course -> Topic selection controls
+        self.assertIn('id="topic-select"', self.course_html)
 
 
 class TestCBridge(unittest.TestCase):
@@ -213,6 +274,16 @@ class TestFastAPIRoutes(unittest.TestCase):
         self.assertIsNotNone(res_json)
         res_md = asyncio.run(batch_export({"format": "markdown"}))
         self.assertIsNotNone(res_md)
+
+    def test_async_question_bank_web_generator_endpoint(self):
+        res = asyncio.run(get_course_questions("CS201", refresh=False))
+        self.assertEqual(res.get("total"), 15)
+        self.assertEqual(len(res.get("questions", [])), 15)
+
+    def test_async_question_bank_refresh_endpoint(self):
+        res = asyncio.run(refresh_course_questions("CS201", {"subject": "Algorithms", "topic": "Asymptotic Analysis"}))
+        self.assertEqual(res.get("total"), 15)
+        self.assertEqual(len(res.get("questions", [])), 15)
 
 
 if __name__ == "__main__":

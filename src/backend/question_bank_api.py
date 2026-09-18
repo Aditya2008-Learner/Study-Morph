@@ -6,6 +6,7 @@ Add these routes to app.py
 from fastapi import APIRouter, HTTPException, Query, Body
 from typing import List, Dict, Any, Optional
 
+from .web_question_engine import WebQuestionEngine
 from .question_generator import (
     QuestionGenerator,
     get_topic_question_bank,
@@ -26,20 +27,81 @@ async def get_topics():
 @router.get("/course/{course_code}")
 async def get_course_questions(
     course_code: str,
-    set_num: int = Query(1, alias="set", description="Question set number (1 or 2)")
+    subject: Optional[str] = Query(None, description="Subject name"),
+    topic: Optional[str] = Query(None, description="Topic name"),
+    refresh: bool = Query(False, description="Generate fresh new question set"),
+    session_id: Optional[str] = Query(None, description="Session ID for anti-duplication"),
+    set_num: Optional[int] = Query(None, alias="set", description="Legacy set number")
 ):
-    """Get all 15 questions for a course for a specific set (Set 1 or Set 2)"""
-    return get_course_question_set(course_code, set_num)
+    """
+    Generate exactly 15 web-researched questions for a course and topic.
+    Every refresh yields a completely fresh set of 15 questions with duplicate prevention.
+    """
+    c_code = str(course_code) if (course_code is not None and not hasattr(course_code, 'default')) else "CS201"
+    subj = str(subject) if (subject is not None and not hasattr(subject, 'default')) else None
+    top = str(topic) if (topic is not None and not hasattr(topic, 'default')) else None
+    ref = bool(refresh) if (refresh is not None and not hasattr(refresh, 'default')) else False
+    sess = str(session_id) if (session_id is not None and not hasattr(session_id, 'default')) else None
+    try:
+        return WebQuestionEngine.generate_questions(
+            course_code=c_code,
+            subject=subj,
+            topic=top,
+            session_id=sess,
+            force_refresh=ref
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Question generation failed: {str(e)}")
+
+
+@router.post("/course/{course_code}/refresh")
+@router.post("/refresh")
+async def refresh_course_questions(
+    course_code: Optional[str] = None,
+    data: Dict[str, Any] = Body({})
+):
+    """
+    Refresh endpoint: Conducts fresh web research and generates 15 new questions.
+    """
+    code = course_code if (isinstance(course_code, str)) else (data.get("course_code") or data.get("course") or "CS201")
+    subject = data.get("subject")
+    topic = data.get("topic")
+    session_id = data.get("session_id")
+    try:
+        return WebQuestionEngine.generate_questions(
+            course_code=code,
+            subject=subject,
+            topic=topic,
+            session_id=session_id,
+            force_refresh=True
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Question refresh failed: {str(e)}")
 
 
 @router.get("/topic/{subject}/{topic}")
 async def get_topic_bank(
     subject: str,
     topic: str,
-    set_num: int = Query(1, alias="set", description="Question set number (1 or 2)")
+    refresh: bool = Query(False),
+    session_id: Optional[str] = Query(None),
+    set_num: Optional[int] = Query(None, alias="set", description="Legacy set number")
 ):
-    """Get full question bank for a topic"""
-    return get_topic_question_bank(subject, topic, set_num)
+    """Get fresh 15 web-researched questions for a topic"""
+    subj = str(subject) if (subject is not None and not hasattr(subject, 'default')) else "Computer Science"
+    top = str(topic) if (topic is not None and not hasattr(topic, 'default')) else "General"
+    ref = bool(refresh) if (refresh is not None and not hasattr(refresh, 'default')) else False
+    sess = str(session_id) if (session_id is not None and not hasattr(session_id, 'default')) else None
+    try:
+        return WebQuestionEngine.generate_questions(
+            course_code=subj,
+            subject=subj,
+            topic=top,
+            session_id=sess,
+            force_refresh=ref
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Topic question generation failed: {str(e)}")
 
 
 @router.post("/generate/similar")
