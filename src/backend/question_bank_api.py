@@ -156,28 +156,6 @@ async def generate_topic_questions(
     return result
 
 
-@router.post("/generate/pyq-similar")
-async def generate_from_pyq(
-    data: Dict[str, Any] = Body(...)
-):
-    """Generate similar questions from a PYQ paper"""
-    pyq_id = data.get("pyq_id")
-    count = data.get("count", 10)
-    difficulty = data.get("difficulty")
-    question_type = data.get("question_type")
-    
-    if not pyq_id:
-        raise HTTPException(status_code=400, detail="pyq_id required")
-    
-    # Get PYQ questions
-    from .database import DatabaseRepo
-    pyq = DatabaseRepo.get_pyq_papers(college="", subject="")
-    # Find the specific PYQ
-    pyq_data = DatabaseRepo.get_pyq_papers()
-    # ... implementation
-    pass
-
-
 @router.post("/save-generated")
 async def save_generated_questions(
     data: Dict[str, Any] = Body(...)

@@ -208,6 +208,15 @@ class TestDatabaseAndCurriculum(unittest.TestCase):
             self.assertIn(key, rows[0])
 
 
+class TestRemovedRoutes(unittest.TestCase):
+    """Routes deleted by the cleanup must be gone, not silently returning null."""
+
+    def test_pyq_similar_route_is_removed(self):
+        from src.backend.question_bank_api import router
+        paths = {r.path for r in router.routes}
+        self.assertNotIn("/api/questions/generate/pyq-similar", paths)
+
+
 class TestQuizEngine(unittest.TestCase):
     def setUp(self):
         self.quiz = QuizEngine.generate_quiz(
