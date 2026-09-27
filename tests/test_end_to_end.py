@@ -12,8 +12,6 @@ if ROOT_DIR not in sys.path:
 
 from src.backend.database import DatabaseRepo
 from src.backend.curriculum_questions import get_course_question_set
-from src.backend.quiz_engine import QuizEngine
-from src.backend.scraper import PYQScraper
 from src.c_core.c_bridge import (
     fast_levenshtein,
     fast_fuzzy_similarity,
@@ -21,17 +19,6 @@ from src.c_core.c_bridge import (
     fast_hash_string
 )
 from src.backend.web_question_engine import WebQuestionEngine
-from src.backend.question_bank_api import get_course_questions, refresh_course_questions
-from src.backend.app import (
-    app,
-    search_pyq,
-    submit_quiz,
-    generate_quiz,
-    get_curriculum,
-    get_system_status,
-    get_topic_content,
-    batch_export
-)
 
 
 class TestWebQuestionEngine(unittest.TestCase):
@@ -232,58 +219,82 @@ class TestRemovedRoutes(unittest.TestCase):
             for orphan in ("app.js", "theme.js", "styles.css", "components.css"):
                 self.assertNotIn(orphan, html, f"{name} still references {orphan}")
 
+    def test_orphaned_backend_modules_are_deleted(self):
+        import os
+        base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src", "backend")
+        for name in ("ocr_parser.py", "grader.py", "assignment_gen.py", "quiz_engine.py",
+                     "note_maker.py", "scraper.py", "question_generator.py", "question_bank_db.py"):
+            self.assertFalse(os.path.exists(os.path.join(base, name)), f"still present: {name}")
 
-class TestQuizEngine(unittest.TestCase):
-    def setUp(self):
-        self.quiz = QuizEngine.generate_quiz(
-            subject="CS201",
-            topic="Asymptotic Analysis",
-            num_questions=3
-        )
-        self.quiz_id = self.quiz["id"]
+    def test_app_imports_without_orphaned_modules(self):
+        import importlib
+        app = importlib.import_module("src.backend.app")
+        self.assertTrue(hasattr(app, "app"))
 
-    def test_quiz_submit_with_list_payload(self):
-        answers_list = [
-            {"question_id": "q1", "selected_index": 1},
-            {"question_id": "q2", "selected_index": 1}
-        ]
-        result = QuizEngine.grade_attempt(self.quiz_id, answers_list, time_taken=45)
-        self.assertIn("score", result)
-        self.assertIn("percentage", result)
-        self.assertIn("answers", result)
+    def _route_paths(self):
+        """Collect route paths, descending into included sub-routers.
 
-    def test_quiz_submit_with_dict_payload_problem_001(self):
-        # Problem 001 fix verification: payload as a dict of {question_id: selected_index}
-        answers_dict = {"q1": 1, "q2": 0}
-        result = QuizEngine.grade_attempt(self.quiz_id, answers_dict, time_taken=30)
-        self.assertIn("score", result)
-        self.assertIn("percentage", result)
-        self.assertEqual(len(result["answers"]), len(self.quiz["questions"]))
+        app.routes mixes APIRoute/Mount with _IncludedRouter objects, which have
+        no .path of their own, so a naive {r.path for r in app.routes} raises.
+        """
+        import importlib
+        from fastapi.routing import APIRoute
+        app = importlib.import_module("src.backend.app").app
+        paths = set()
+        for r in app.routes:
+            p = getattr(r, "path", None)
+            if p:
+                paths.add(p)
+            for sub in getattr(r, "routes", []) or []:
+                if isinstance(sub, APIRoute):
+                    paths.add(getattr(sub, "path", ""))
+        return paths
 
-    def test_quiz_submit_with_nested_dict_payload(self):
-        answers_nested = {"answers": {"q1": 1, "q2": 1}}
-        result = QuizEngine.grade_attempt(self.quiz_id, answers_nested, time_taken=20)
-        self.assertIn("score", result)
-        self.assertIn("percentage", result)
+    def test_route_count_is_reduced(self):
+        paths = self._route_paths()
+        for gone in ("/api/notebooks/upload", "/api/help/evaluate", "/api/quiz/generate",
+                     "/api/chat/message", "/api/assignments", "/api/pyq/search",
+                     "/api/generator/create", "/api/notes/generate", "/api/progress",
+                     "/api/recommendations"):
+            self.assertNotIn(gone, paths, f"route should be gone: {gone}")
 
-    def test_quiz_submit_with_empty_or_malformed_answers(self):
-        result_empty = QuizEngine.grade_attempt(self.quiz_id, {}, time_taken=10)
-        self.assertEqual(result_empty["score"], 0.0)
+    def test_live_routes_are_retained(self):
+        paths = self._route_paths()
+        for kept in ("/", "/index.html", "/course.html", "/course", "/api/system/status",
+                     "/api/curriculum", "/api/curriculum/full", "/api/topics",
+                     "/api/content/{course_code}", "/api/interactive/{course_code}",
+                     "/api/activity/log"):
+            self.assertIn(kept, paths, f"live route was removed by mistake: {kept}")
 
-        result_invalid_list = QuizEngine.grade_attempt(self.quiz_id, ["invalid", None, 123], time_taken=10)
-        self.assertEqual(result_invalid_list["score"], 0.0)
+    def test_database_init_has_no_question_bank_import(self):
+        import os
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "src", "backend", "database_init.py")
+        with open(path, encoding="utf-8") as fh:
+            src = fh.read()
+        self.assertNotIn("question_bank_db", src, "dangling import of deleted module")
 
+    def test_question_router_keeps_only_live_routes(self):
+        from src.backend.question_bank_api import router
+        paths = {r.path for r in router.routes}
+        for kept in ("/api/questions/topics", "/api/questions/course/{course_code}",
+                     "/api/questions/course/{course_code}/refresh", "/api/questions/refresh",
+                     "/api/questions/topic/{subject}/{topic}",
+                     "/api/questions/topic-stats/{subject}/{topic}"):
+            self.assertIn(kept, paths, f"live question route missing: {kept}")
+        for gone in ("/api/questions/generate/similar", "/api/questions/generate/topic",
+                     "/api/questions/save-generated", "/api/questions/check-similarity",
+                     "/api/questions/regenerate-rejected"):
+            self.assertNotIn(gone, paths, f"dead question route retained: {gone}")
 
-class TestPYQSearch(unittest.TestCase):
-    def test_search_pyq_with_subject(self):
-        results = PYQScraper.search_online_pyq(subject="Data Structures")
-        self.assertIsInstance(results, list)
-
-    def test_search_pyq_without_subject_problem_003(self):
-        # Problem 003 fix verification: search without query parameters should not crash
-        results = PYQScraper.search_online_pyq(subject=None)
-        self.assertIsInstance(results, list)
-        self.assertGreater(len(results), 0)
+    def test_question_router_has_no_question_generator_dependency(self):
+        import os
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "src", "backend", "question_bank_api.py")
+        with open(path, encoding="utf-8") as fh:
+            src = fh.read()
+        self.assertNotIn("question_generator", src)
+        self.assertNotIn("qgen", src)
 
 
 class TestFrontendIntegrity(unittest.TestCase):
@@ -317,46 +328,41 @@ class TestFrontendIntegrity(unittest.TestCase):
 
 
 class TestFastAPIRoutes(unittest.TestCase):
-    def test_async_system_status(self):
-        res = asyncio.run(get_system_status())
-        self.assertEqual(res.get("status"), "online")
+    def _client(self):
+        from fastapi.testclient import TestClient
+        from src.backend.app import app
+        return TestClient(app)
 
-    def test_async_pyq_search_no_params(self):
-        res = asyncio.run(search_pyq(subject=None))
-        self.assertIsInstance(res, list)
+    def test_system_status_endpoint(self):
+        res = self._client().get("/api/system/status")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json().get("status"), "online")
 
-    def test_async_quiz_submit_dict_format(self):
-        quiz_res = asyncio.run(generate_quiz({
-            "subject": "CS201",
-            "topic": "Asymptotic Analysis",
-            "num_questions": 3
-        }))
-        quiz_id = quiz_res["id"]
-        
-        # Test submitting dictionary formatted answers
-        submit_payload = {
-            "answers": {"q1": 1, "q2": 1},
-            "time_taken_seconds": 25
-        }
-        res = asyncio.run(submit_quiz(quiz_id, submit_payload))
-        self.assertIn("score", res)
-        self.assertIn("percentage", res)
+    def test_index_page_is_served(self):
+        res = self._client().get("/")
+        self.assertEqual(res.status_code, 200)
 
-    def test_async_batch_export_json_and_markdown(self):
-        res_json = asyncio.run(batch_export({"format": "json"}))
-        self.assertIsNotNone(res_json)
-        res_md = asyncio.run(batch_export({"format": "markdown"}))
-        self.assertIsNotNone(res_md)
+    def test_course_page_is_served(self):
+        res = self._client().get("/course.html")
+        self.assertEqual(res.status_code, 200)
 
-    def test_async_question_bank_web_generator_endpoint(self):
-        res = asyncio.run(get_course_questions("CS201", refresh=False))
-        self.assertEqual(res.get("total"), 15)
-        self.assertEqual(len(res.get("questions", [])), 15)
+    def test_curriculum_endpoints(self):
+        c = self._client()
+        self.assertEqual(c.get("/api/curriculum").status_code, 200)
+        self.assertEqual(c.get("/api/curriculum/full").status_code, 200)
+        self.assertEqual(c.get("/api/curriculum/CS201").status_code, 200)
 
-    def test_async_question_bank_refresh_endpoint(self):
-        res = asyncio.run(refresh_course_questions("CS201", {"subject": "Algorithms", "topic": "Asymptotic Analysis"}))
-        self.assertEqual(res.get("total"), 15)
-        self.assertEqual(len(res.get("questions", [])), 15)
+    def test_content_and_interactive_endpoints(self):
+        c = self._client()
+        self.assertEqual(c.get("/api/content/CS201").status_code, 200)
+        self.assertEqual(c.get("/api/interactive/CS201").status_code, 200)
+
+    def test_question_bank_course_endpoint_returns_15(self):
+        res = self._client().get("/api/questions/course/CS201")
+        self.assertEqual(res.status_code, 200)
+        body = res.json()
+        self.assertEqual(body.get("total"), 15)
+        self.assertEqual(len(body.get("questions", [])), 15)
 
 
 if __name__ == "__main__":

@@ -12,7 +12,6 @@ from typing import List, Dict, Any, Optional
 
 from .curriculum_data import FULL_BTECH_CURRICULUM
 from .study_content import ALL_STUDY_CONTENT
-from .question_bank_db import init_question_bank
 from .curriculum_questions import COURSE_QUESTIONS_MAP
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "study_assistant.db")
@@ -532,7 +531,8 @@ def seed_sample_assignments():
 
 def seed_question_bank():
     """Seed comprehensive 15 questions per subject (Set 1 & Set 2) into question_bank"""
-    init_question_bank()
+    # The separate schema module was removed in this cleanup; the question_bank
+    # table is created by init_db() in this module, so no extra DDL call is needed.
     conn = get_connection()
     cursor = conn.cursor()
     now = datetime.now(timezone.utc).isoformat()
