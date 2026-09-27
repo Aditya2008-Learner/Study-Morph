@@ -1136,6 +1136,35 @@ class DatabaseRepo:
         conn.close()
         return cards
     
+    @staticmethod
+    def get_question_bank_for_index() -> List[Dict[str, Any]]:
+        """Get all approved questions for search indexing"""
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id, question_text, subject, topic, difficulty, marks, question_type "
+            "FROM question_bank WHERE status = 'Approved' ORDER BY subject, topic"
+        )
+        rows = cursor.fetchall()
+        result = []
+        for r in rows:
+            d = dict(r)
+            d["related_concepts"] = json.loads(d["related_concepts"]) if d.get("related_concepts") else []
+            result.append(d)
+        conn.close()
+        return result
+
+    @staticmethod
+    def get_all_interactive_content() -> List[Dict[str, Any]]:
+        """Get all interactive flashcard content across every course"""
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM interactive_content ORDER BY course_code, topic")
+        rows = cursor.fetchall()
+        result = [dict(r) for r in rows]
+        conn.close()
+        return result
+    
     # ===== Activity & Progress Tracking =====
     
     @staticmethod

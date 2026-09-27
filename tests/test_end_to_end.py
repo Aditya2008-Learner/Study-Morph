@@ -159,6 +159,54 @@ class TestDatabaseAndCurriculum(unittest.TestCase):
         self.assertTrue(deleted)
         self.assertIsNone(DatabaseRepo.get_assignment_by_id(aid))
 
+    def test_get_question_bank_for_index_returns_approved_rows(self):
+        rows = DatabaseRepo.get_question_bank_for_index()
+        self.assertIsInstance(rows, list)
+        self.assertGreater(len(rows), 1000, "expected the seeded 1740-question corpus")
+        first = rows[0]
+        for key in ("id", "question_text", "subject", "topic", "difficulty", "marks"):
+            self.assertIn(key, first, f"missing key {key}")
+
+    def test_get_question_bank_for_index_excludes_non_approved(self):
+        # Every seeded row is Approved, so the filter cannot be observed by
+        # counting alone. Insert a Rejected row, prove it is excluded, then
+        # remove it so the test leaves no trace.
+        from src.backend.database import get_connection
+        conn = get_connection()
+        cursor = conn.cursor()
+        marker = "ZZZ-REJECTED-PROBE-QUESTION"
+        try:
+            cursor.execute(
+                "INSERT INTO question_bank (id, question_text, subject, topic, source_type, "
+                "difficulty, question_type, marks, status, created_at, updated_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                ("probe-rejected-1", marker, "ZZ999", "Probe", "AI_Generated",
+                 "Easy", "Exam", 5, "Rejected", "2026-01-01T00:00:00", "2026-01-01T00:00:00"),
+            )
+            conn.commit()
+
+            rows = DatabaseRepo.get_question_bank_for_index()
+            self.assertNotIn(
+                marker, [r["question_text"] for r in rows],
+                "a Rejected question leaked into the index results"
+            )
+        finally:
+            cursor.execute("DELETE FROM question_bank WHERE id = ?", ("probe-rejected-1",))
+            conn.commit()
+            conn.close()
+
+        rows_after = DatabaseRepo.get_question_bank_for_index()
+        self.assertGreater(len(rows_after), 1000, "probe cleanup left the corpus damaged")
+
+    def test_get_all_interactive_content_returns_every_course(self):
+        rows = DatabaseRepo.get_all_interactive_content()
+        self.assertIsInstance(rows, list)
+        self.assertGreater(len(rows), 50)
+        codes = {r["course_code"] for r in rows}
+        self.assertGreater(len(codes), 5, "expected multiple courses, not one")
+        for key in ("front_text", "back_text"):
+            self.assertIn(key, rows[0])
+
 
 class TestQuizEngine(unittest.TestCase):
     def setUp(self):
