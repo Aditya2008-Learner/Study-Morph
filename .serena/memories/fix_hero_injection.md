@@ -1,0 +1,1 @@
+Internal server error fix: restored index.html from git, need to re-add hero correctly. Hero must go BEFORE .app-container, not break HTML nesting. Use simple python script with file write not inline python.

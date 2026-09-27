@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyMorph — Engineering Study Instrument &amp; Syllabus Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- KaTeX for formula rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #FAFAF9;
+            --surface: #FFFFFF;
+            --surface-subtle: #F4F4F5;
+            --border: #E4E4E7;
+            --border-strong: #18181B;
+            --ink: #09090B;
+            --ink-body: #27272A;
+            --ink-muted: #71717A;
+            --ink-faint: #A1A1AA;
+            
+            --accent-emerald: #059669;
+            --accent-emerald-bg: #ECFDF5;
+            --accent-emerald-border: #A7F3D0;
+            
+            --accent-amber: #D97706;
+            --accent-amber-bg: #FFFBEB;
+            --accent-amber-border: #FDE68A;
+            
+            --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-display: 'Space Grotesk', var(--font-sans);
+            --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
+            
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            
+            --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.04);
+            --shadow-card: 0 2px 8px -2px rgba(0, 0, 0, 0.06);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg);
+            color: var(--ink-body);
+            line-height: 1.6;
+            font-size: 15px;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        /* Architectural Shell */
+        .site-shell {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 24px;
+            margin: 0 auto;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4 {
+            font-family: var(--font-display);
+            color: var(--ink);
+            letter-spacing: -0.03em;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        p {
+            color: var(--ink-muted);
+        }
+
+        .mono-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--ink-muted);
+        }
+
+        /* Top Navigation */
+        .navbar-wrapper {
+            position: sticky;
+            top: 0;
+            z-index: 90;
+            background-color: rgba(250, 250, 249, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .brand-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--ink);
+        }
+
+        .brand-monogram {
+            width: 28px;
+            height: 28px;
+            background-color: var(--ink);
+            color: #FFFFFF;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+        }
+
+        .brand-text {
+            font-family: var(--font-display);
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-edition {
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--accent-emerald);
+            background-color: var(--accent-emerald-bg);
+            border: 1px solid var(--accent-emerald-border);
+            padding: 2px 6px;
+            border-radius: var(--radius-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--ink-muted);
+            text-decoration: none;
+            transition: color 140ms ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--ink);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            color: var(--ink-muted);
+            padding: 4px 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--accent-emerald);
+        }
+
+        /* Buttons & Actions */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 140ms ease;
+            white-space: nowrap;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: var(--ink);
+            color: #FFFFFF;
+            border-color: var(--ink);
+        }
+
+        .btn-primary:hover {
+            background-color: #27272A;
+            border-color: #27272A;
+        }
+
+        .btn-secondary {
+            background-color: var(--surface);
+            color: var(--ink);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--surface-subtle);
+            border-color: var(--border-strong);
+        }
+
+        .btn-brand {
+            background-color: var(--ink);
+            color: #FFFFFF;
+        }
+
+        .btn-brand:hover {
+            background-color: #27272A;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 140ms ease;
+            color: var(--ink-muted);
+        }
+
+        .btn-icon:hover:not(:disabled) {
+            background: var(--surface-subtle);
+            color: var(--ink);
+            border-color: var(--border-strong);
+        }
+
+        .btn-icon:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            stroke-width: 1.75;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+        .icon-sm { width: 14px; height: 14px; }
+        .icon-md { width: 18px; height: 18px; }
+
+        /* Section Layouts */
+        section {
+            padding: 64px 0;
+            width: 100%;
+        }
+
+        /* 1. Hero / Masthead Section */
+        .masthead-section {
+            padding: 56px 0 48px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .masthead-grid {
+            display: grid;
+            grid-template-columns: 1.25fr 0.75fr;
+            gap: 48px;
+            align-items: start;
+        }
+
+        .masthead-tag-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .masthead-title {
+            font-size: 2.75rem;
+            line-height: 1.12;
+            letter-spacing: -0.035em;
+            margin-bottom: 18px;
+            color: var(--ink);
+        }
+
+        .masthead-desc {
+            font-size: 1.0625rem;
+            line-height: 1.6;
+            color: var(--ink-muted);
+            margin-bottom: 28px;
+            max-width: 580px;
+        }
+
+        .masthead-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Masthead Right: Spec Telemetry Box */
+        .telemetry-box {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .telemetry-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 14px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .telemetry-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .telemetry-item {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+
+        .telemetry-key {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--ink-muted);
+            text-transform: uppercase;
+        }
+
+        .telemetry-val {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .telemetry-val.highlight {
+            color: var(--accent-emerald);
+        }
+
+        /* 2. Methodology Section */
+        .features-section {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-header {
+            margin-bottom: 36px;
+        }
+
+        .section-tag {
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .section-title {
+            font-size: 1.875rem;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+        }
+
+        .section-desc {
+            font-size: 1rem;
+            color: var(--ink-muted);
+            max-width: 640px;
+        }
+
+        .method-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .method-block {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 24px 22px;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 140ms ease;
+        }
+
+        .method-block:hover {
+            border-color: var(--border-strong);
+        }
+
+        .method-phase {
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            color: var(--accent-emerald);
+            background: var(--accent-emerald-bg);
+            border: 1px solid var(--accent-emerald-border);
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            display: inline-block;
+            margin-bottom: 14px;
+            align-self: flex-start;
+        }
+
+        .method-block h3 {
+            font-size: 1.125rem;
+            margin-bottom: 8px;
+        }
+
+        .method-block p {
+            font-size: 0.875rem;
+            color: var(--ink-muted);
+            line-height: 1.55;
+        }
+
+        /* 3. The Interactive Workbench (#dashboard) */
+        .workspace-section {
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .workbench-wrapper {
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+
+        .workbench-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .workbench-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sample-presets {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .preset-label {
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            color: var(--ink-muted);
+            text-transform: uppercase;
+            margin-right: 4px;
+        }
+
+        .preset-chip {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--ink-muted);
+            cursor: pointer;
+            transition: all 120ms ease;
+        }
+
+        .preset-chip:hover {
+            border-color: var(--ink);
+            color: var(--ink);
+        }
+
+        .preset-chip.active {
+            background-color: var(--ink);
+            color: #FFFFFF;
+            border-color: var(--ink);
+        }
+
+        /* Split Desk Grid */
+        .workbench-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 520px;
+        }
+
+        .input-pane {
+            padding: 24px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            background-color: var(--surface);
+        }
+
+        .pane-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .editor-textarea {
+            width: 100%;
+            flex: 1;
+            min-height: 320px;
+            padding: 16px;
+            font-family: var(--font-mono);
+            font-size: 0.84375rem;
+            line-height: 1.6;
+            color: var(--ink-body);
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            outline: none;
+            resize: vertical;
+            transition: border-color 140ms ease;
+        }
+
+        .editor-textarea:focus {
+            border-color: var(--ink);
+            background-color: #FFFFFF;
+        }
+
+        .input-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .char-counter {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--ink-muted);
+        }
+
+        /* Output Pane: Stacked Summary & Flashcards */
+        .output-pane {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            background-color: var(--bg);
+            overflow-y: auto;
+        }
+
+        /* Summary Module */
+        .output-section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .summary-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .summary-card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .summary-tag {
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            color: var(--accent-emerald);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .summary-content {
+            font-size: 0.875rem;
+            color: var(--ink-body);
+            line-height: 1.55;
+        }
+
+        .formula-box {
+            display: inline-block;
+            background-color: var(--surface-subtle);
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            margin: 6px 0;
+            color: var(--ink);
+            font-size: 0.9375rem;
+        }
+
+        /* Flashcard Deck Module */
+        .deck-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .deck-meta-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .deck-counter {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--ink-muted);
+        }
+
+        .flashcard-3d-wrapper {
+            perspective: 1000px;
+            min-height: 180px;
+            width: 100%;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 180px;
+            text-align: left;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .flashcard-inner.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .fc-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid var(--border);
+            background-color: var(--surface);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .fc-front {
+            border-left: 3px solid var(--ink);
+        }
+
+        .fc-back {
+            transform: rotateY(180deg);
+            background-color: #FAFAFA;
+            border-left: 3px solid var(--accent-emerald);
+        }
+
+        .fc-badge {
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--ink-muted);
+        }
+
+        .fc-question {
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: var(--ink);
+            line-height: 1.5;
+            margin: 8px 0;
+        }
+
+        .fc-answer {
+            font-size: 0.90625rem;
+            color: var(--ink-body);
+            line-height: 1.55;
+            margin: 8px 0;
+        }
+
+        .fc-hint-action {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            color: var(--ink-muted);
+            margin-top: auto;
+        }
+
+        .deck-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 4px;
+        }
+
+        .deck-dots {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .deck-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--border);
+            transition: all 120ms ease;
+        }
+
+        .deck-dot.active {
+            background-color: var(--ink);
+            width: 16px;
+            border-radius: 3px;
+        }
+
+        /* 4. Syllabus Matrix & Course Catalog (#courses) */
+        .courses-section {
+            padding: 64px 0;
+        }
+
+        .course-catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        .course-item-card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-decoration: none;
+            color: inherit;
+            transition: all 140ms ease;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .course-item-card:hover {
+            border-color: var(--border-strong);
+            box-shadow: var(--shadow-card);
+            transform: translateY(-1px);
+        }
+
+        .course-top-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .course-code-tag {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--ink);
+            background-color: var(--surface-subtle);
+            border: 1px solid var(--border);
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+        }
+
+        .course-sem-tag {
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            color: var(--ink-muted);
+            text-transform: uppercase;
+        }
+
+        .course-item-card h3 {
+            font-size: 1.1875rem;
+            color: var(--ink);
+            margin-bottom: 8px;
+        }
+
+        .course-item-card p {
+            font-size: 0.875rem;
+            color: var(--ink-muted);
+            line-height: 1.55;
+            margin-bottom: 16px;
+        }
+
+        .course-footer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--ink-muted);
+        }
+
+        .course-action-text {
+            font-weight: 600;
+            color: var(--accent-emerald);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 5. Colophon & Site Footer */
+        .site-footer {
+            border-top: 1px solid var(--border);
+            padding: 48px 0 36px;
+            background-color: var(--surface);
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 36px;
+        }
+
+        .footer-brand h4 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .footer-brand p {
+            font-size: 0.8125rem;
+            line-height: 1.55;
+            color: var(--ink-muted);
+            max-width: 360px;
+        }
+
+        .footer-col h5 {
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--ink);
+            margin-bottom: 12px;
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .footer-links a {
+            font-size: 0.8125rem;
+            color: var(--ink-muted);
+            text-decoration: none;
+            transition: color 120ms ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--ink);
+        }
+
+        .footer-bottom {
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            color: var(--ink-faint);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 960px) {
+            .masthead-grid {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+            .workbench-grid {
+                grid-template-columns: 1fr;
+            }
+            .input-pane {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+            .course-catalog-grid {
+                grid-template-columns: 1fr;
+            }
+            .method-grid {
+                grid-template-columns: 1fr;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            .masthead-title {
+                font-size: 2.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="site-shell">
+        <!-- Top Navigation Bar -->
+        <header class="navbar-wrapper">
+            <div class="container">
+                <nav class="navbar">
+                    <a href="index.html" class="brand-link">
+                        <span class="brand-monogram">SM</span>
+                        <span class="brand-text">StudyMorph</span>
+                        <span class="brand-edition">B.Tech 2026</span>
+                    </a>
+                    
+                    <ul class="nav-links">
+                        <li><a href="#features">Methodology</a></li>
+                        <li><a href="#dashboard">Workbench</a></li>
+                        <li><a href="#courses">Curriculum Matrix</a></li>
+                    </ul>
+
+                    <div class="nav-actions">
+                        <div class="status-pill">
+                            <span class="status-dot"></span>
+                            <span>29 Subjects Indexed</span>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </header>
+
+        <!-- 1. Technical Masthead / Intent Section -->
+        <section class="masthead-section">
+            <div class="container">
+                <div class="masthead-grid">
+                    <div>
+                        <div class="masthead-tag-row">
+                            <span class="mono-label">Academic Computing Instrument</span>
+                            <span class="mono-label" style="color: var(--accent-emerald);">// AICTE Syllabus Aligned</span>
+                        </div>
+                        <h1 class="masthead-title">Engineering courseware distilled to mathematical ground truth.</h1>
+                        <p class="masthead-desc">Extract high-yield concepts, verify derivation constraints, and practice active recall across 29 core B.Tech subjects without reading 50-page slide decks.</p>
+                        <div class="masthead-actions">
+                            <button class="btn btn-primary" onclick="scrollToDashboard()">
+                                <span>Open Study Workbench</span>
+                                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
+                            <a href="#courses" class="btn btn-secondary">
+                                <span>Explore 29 Courses</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Telemetry & Engine Specs -->
+                    <div class="telemetry-box">
+                        <div class="telemetry-header">
+                            <span class="mono-label">System Telemetry</span>
+                            <span class="mono-label highlight" style="color: var(--accent-emerald);">v2.4 Kernel</span>
+                        </div>
+                        <div class="telemetry-list">
+                            <div class="telemetry-item">
+                                <span class="telemetry-key">Syllabus Scope</span>
+                                <span class="telemetry-val">8 Semesters · 29 Subjects</span>
+                            </div>
+                            <div class="telemetry-item">
+                                <span class="telemetry-key">Exam Question Bank</span>
+                                <span class="telemetry-val">1,740 Verified Sets</span>
+                            </div>
+                            <div class="telemetry-item">
+                                <span class="telemetry-key">Formula Engine</span>
+                                <span class="telemetry-val highlight">KaTeX LaTeX Core</span>
+                            </div>
+                            <div class="telemetry-item">
+                                <span class="telemetry-key">Research Subsystem</span>
+                                <span class="telemetry-val">Wikipedia &amp; DDG Hybrid</span>
+                            </div>
+                            <div class="telemetry-item">
+                                <span class="telemetry-key">Evaluation Model</span>
+                                <span class="telemetry-val">4-Pillar Academic Rubric</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Methodology & Academic Architecture (#features) -->
+        <section class="features-section" id="features">
+            <div class="container">
+                <div class="section-header">
+                    <span class="mono-label section-tag">Methodology</span>
+                    <h2 class="section-title">A focused instrument for high-stakes engineering exams.</h2>
+                    <p class="section-desc">Designed around deliberate practice and spaced repetition for technical undergraduate coursework.</p>
+                </div>
+
+                <div class="method-grid">
+                    <div class="method-block">
+                        <span class="method-phase">Phase 01 // Synthesis</span>
+                        <h3>High-Yield Formulation</h3>
+                        <p>Raw lecture slides and dense textbook pages are condensed into concise definitions, mathematical constraints, and exam watchouts with exact KaTeX rendering.</p>
+                    </div>
+
+                    <div class="method-block">
+                        <span class="method-phase">Phase 02 // Active Recall</span>
+                        <h3>Derivation Flashcards</h3>
+                        <p>Self-testing flashcards with verified step-by-step working. Review theorem assumptions, boundary conditions, and recurrence relations with instant flip feedback.</p>
+                    </div>
+
+                    <div class="method-block">
+                        <span class="method-phase">Phase 03 // Examination Bank</span>
+                        <h3>15-Question Curated Sets</h3>
+                        <p>Complete university-pattern question sets mapped from 5-mark conceptual problems to 10-mark full derivations with verified model solutions.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. The Interactive Workbench (#dashboard) -->
+        <section class="workspace-section" id="dashboard">
+            <div class="container">
+                <div class="section-header">
+                    <span class="mono-label section-tag">Interactive Study Desk</span>
+                    <h2 class="section-title">Live Concept &amp; Formula Extraction</h2>
+                    <p class="section-desc">Paste raw lecture notes or select a syllabus unit below to generate instant high-yield summaries and active recall cards.</p>
+                </div>
+
+                <div class="workbench-wrapper">
+                    <!-- Workbench Topbar -->
+                    <div class="workbench-topbar">
+                        <div class="workbench-title-wrap">
+                            <span class="mono-label" style="color: var(--ink);">Workspace Desk</span>
+                            <span class="mono-label">// Ingestion &amp; Output Buffer</span>
+                        </div>
+                        <div class="sample-presets">
+                            <span class="preset-label">Load Unit:</span>
+                            <button class="preset-chip active" onclick="loadSampleData('thermo', this)">Thermodynamics</button>
+                            <button class="preset-chip" onclick="loadSampleData('os', this)">OS Concurrency</button>
+                            <button class="preset-chip" onclick="loadSampleData('dsa', this)">DSA Recurrences</button>
+                        </div>
+                    </div>
+
+                    <!-- Split Grid: Editor (Left) + Output (Right) -->
+                    <div class="workbench-grid">
+                        <!-- Left: Input Editor -->
+                        <div class="input-pane">
+                            <div class="pane-header">
+                                <label for="lectureInput" class="mono-label" style="color: var(--ink);">Raw Lecture Notes / Syllabus Unit</label>
+                            </div>
+                            <textarea id="lectureInput" class="editor-textarea" placeholder="Paste your raw lecture notes, theorem definitions, or syllabus excerpt here..."></textarea>
+                            <div class="input-footer">
+                                <span class="char-counter" id="charCounter">Ready</span>
+                                <button class="btn btn-brand" onclick="generateStudyKit()">
+                                    <span>Extract Study Kit</span>
+                                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Right: Structured Outputs -->
+                        <div class="output-pane">
+                            <!-- High-Yield Summary Feed -->
+                            <div>
+                                <div class="output-section-title">
+                                    <span class="mono-label" style="color: var(--ink);">High-Yield Summary</span>
+                                    <span class="mono-label" style="color: var(--accent-emerald);">KaTeX Rendered</span>
+                                </div>
+                                <div class="summary-feed" id="summaryContainer">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- Flashcard Active Recall Deck -->
+                            <div class="deck-wrapper">
+                                <div class="deck-meta-bar">
+                                    <span class="mono-label" style="color: var(--ink);">Active Recall Deck</span>
+                                    <span class="deck-counter" id="deckCounter">Card 1 / 3</span>
+                                </div>
+
+                                <div class="flashcard-3d-wrapper">
+                                    <div class="flashcard-inner" id="flashcardModel" onclick="flipCard()">
+                                        <div class="fc-face fc-front">
+                                            <span class="fc-badge">Question / Prompt</span>
+                                            <div class="fc-question" id="fcQuestion">Loading deck...</div>
+                                            <div class="fc-hint-action">
+                                                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                                                <span>Click or press [Space] to flip</span>
+                                            </div>
+                                        </div>
+                                        <div class="fc-face fc-back">
+                                            <span class="fc-badge" style="color: var(--accent-emerald);">Verified Answer &amp; Derivation</span>
+                                            <div class="fc-answer" id="fcAnswer">...</div>
+                                            <div class="fc-hint-action">
+                                                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                                                <span>Click to return to question</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="deck-controls">
+                                    <button class="btn-icon" onclick="prevCard()" id="btnPrev" aria-label="Previous card">
+                                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                                    </button>
+                                    <div class="deck-dots" id="deckDots">
+                                        <div class="deck-dot active"></div>
+                                        <div class="deck-dot"></div>
+                                        <div class="deck-dot"></div>
+                                    </div>
+                                    <button class="btn-icon" onclick="nextCard()" id="btnNext" aria-label="Next card">
+                                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Curriculum Matrix & Course Library (#courses) -->
+        <section class="courses-section" id="courses">
+            <div class="container">
+                <div class="section-header">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px;">
+                        <div>
+                            <span class="mono-label section-tag">Curriculum Matrix</span>
+                            <h2 class="section-title">Core Engineering Subjects</h2>
+                            <p class="section-desc">Select any syllabus module to open its dedicated 15-question examination workbench, step-by-step solutions, and diagnostic quiz.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="course-catalog-grid">
+                    <!-- Course 1 -->
+                    <a href="course.html?course=CS201" class="course-item-card">
+                        <div>
+                            <div class="course-top-meta">
+                                <span class="course-code-tag">CS201</span>
+                                <span class="course-sem-tag">Semester 3 · Year 2</span>
+                            </div>
+                            <h3>Design &amp; Analysis of Algorithms</h3>
+                            <p>Asymptotic complexity, recurrence trees, Master Theorem, AVL balance factors, Dijkstra shortest-path, dynamic programming, and NP-completeness proofs.</p>
+                        </div>
+                        <div class="course-footer-row">
+                            <span>15 Curated Questions</span>
+                            <span class="course-action-text">Open Study Desk &rarr;</span>
+                        </div>
+                    </a>
+
+                    <!-- Course 2 -->
+                    <a href="course.html?course=CS203" class="course-item-card">
+                        <div>
+                            <div class="course-top-meta">
+                                <span class="course-code-tag">CS203</span>
+                                <span class="course-sem-tag">Semester 3 · Year 2</span>
+                            </div>
+                            <h3>Operating Systems</h3>
+                            <p>Process concurrency, Coffman deadlock conditions, Banker's safe state algorithm, semaphore primitives, demand paging, and TLB hit ratio derivations.</p>
+                        </div>
+                        <div class="course-footer-row">
+                            <span>15 Curated Questions</span>
+                            <span class="course-action-text">Open Study Desk &rarr;</span>
+                        </div>
+                    </a>
+
+                    <!-- Course 3 -->
+                    <a href="course.html?course=CS401" class="course-item-card">
+                        <div>
+                            <div class="course-top-meta">
+                                <span class="course-code-tag">CS401</span>
+                                <span class="course-sem-tag">Semester 5 · Year 3</span>
+                            </div>
+                            <h3>Artificial Intelligence &amp; Search</h3>
+                            <p>Heuristic state-space search (A*, IDA*), minimax game trees with alpha-beta pruning, knowledge representation in first-order logic, and Bayesian networks.</p>
+                        </div>
+                        <div class="course-footer-row">
+                            <span>15 Curated Questions</span>
+                            <span class="course-action-text">Open Study Desk &rarr;</span>
+                        </div>
+                    </a>
+
+                    <!-- Course 4 -->
+                    <a href="course.html?course=MA101" class="course-item-card">
+                        <div>
+                            <div class="course-top-meta">
+                                <span class="course-code-tag">MA101</span>
+                                <span class="course-sem-tag">Semester 1 · Year 1</span>
+                            </div>
+                            <h3>Engineering Mathematics I</h3>
+                            <p>Linear algebra, matrix ranks, Cayley-Hamilton theorem, multivariable Taylor series, vector calculus, Gauss divergence, and Stokes theorems.</p>
+                        </div>
+                        <div class="course-footer-row">
+                            <span>15 Curated Questions</span>
+                            <span class="course-action-text">Open Study Desk &rarr;</span>
+                        </div>
+                    </a>
+
+                    <!-- Course 5 -->
+                    <a href="course.html?course=CS402" class="course-item-card">
+                        <div>
+                            <div class="course-top-meta">
+                                <span class="course-code-tag">CS402</span>
+                                <span class="course-sem-tag">Semester 5 · Year 3</span>
+                            </div>
+                            <h3>Machine Learning</h3>
+                            <p>Gradient descent optimization, support vector machines with kernel margins, decision tree entropy gains, clustering, and neural backpropagation.</p>
+                        </div>
+                        <div class="course-footer-row">
+                            <span>15 Curated Questions</span>
+                            <span class="course-action-text">Open Study Desk &rarr;</span>
+                        </div>
+                    </a>
+
+                    <!-- Course 6 -->
+                    <a href="course.html?course=CS603" class="course-item-card">
+                        <div>
+                            <div class="course-top-meta">
+                                <span class="course-code-tag">CS603</span>
+                                <span class="course-sem-tag">Semester 7 · Year 4</span>
+                            </div>
+                            <h3>Distributed Systems</h3>
+                            <p>Lamport logical timestamps, Raft and Paxos consensus algorithms, CAP theorem consistency boundaries, two-phase commit, and fault tolerance.</p>
+                        </div>
+                        <div class="course-footer-row">
+                            <span>15 Curated Questions</span>
+                            <span class="course-action-text">Open Study Desk &rarr;</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Colophon & Site Footer -->
+        <footer class="site-footer">
+            <div class="container">
+                <div class="footer-grid">
+                    <div class="footer-brand">
+                        <h4>StudyMorph</h4>
+                        <p>Academic study workbench and syllabus repository built for B.Tech Computer Science and engineering disciplines.</p>
+                    </div>
+                    <div class="footer-col">
+                        <h5>Syllabus Structure</h5>
+                        <ul class="footer-links">
+                            <li><a href="course.html?course=MA101">Year 1: Foundation Sciences</a></li>
+                            <li><a href="course.html?course=CS201">Year 2: Core Systems &amp; DSA</a></li>
+                            <li><a href="course.html?course=CS401">Year 3: AI, ML &amp; Compilers</a></li>
+                            <li><a href="course.html?course=CS603">Year 4: Distributed &amp; Capstone</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h5>Technical Stack</h5>
+                        <ul class="footer-links">
+                            <li><a href="#dashboard">KaTeX Formula Engine</a></li>
+                            <li><a href="#dashboard">Active Recall Practice</a></li>
+                            <li><a href="#courses">15-Question Exam Sets</a></li>
+                            <li><a href="#features">Verified Step Solutions</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="footer-bottom">
+                    <span>&copy; 2026 StudyMorph. Engineering Academic Repository.</span>
+                    <span>AICTE B.Tech Scheme Compliant · Fast C-Bridge Indexer</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts for dynamic rendering and interactions -->
+    <script>
+        const PRESETS = {
+            thermo: {
+                name: "Thermodynamics",
+                text: "Unit 3 Engineering Thermodynamics: First Law governs Conservation of Energy stating dU = dQ - dW. The Second Law introduces Entropy dS >= dQ/T for all spontaneous cycles. Carnot efficiency represents maximum theoretical limit: eta = 1 - (T_cold / T_hot). Isothermal processes have dT = 0 while Adiabatic processes operate under dQ = 0.",
+                summaries: [
+                    { label: "1. First Law of Thermodynamics", content: "Conservation of energy formulation. Internal energy change equals heat supplied minus work done by system:<br><span class='formula-box math'>\\Delta U = Q - W</span>" },
+                    { label: "2. Second Law & Entropy Criterion", content: "Isolated system entropy monotonically increases. Spontaneous processes are irreversible:<br><span class='formula-box math'>\\Delta S \\ge \\int \\frac{\\delta Q}{T}</span>" },
+                    { label: "3. Maximum Carnot Efficiency", content: "Theoretical upper bound on heat engine conversion efficiency operating between thermal reservoirs:<br><span class='formula-box math'>\\eta_{max} = 1 - \\frac{T_{C}}{T_{H}}</span>" }
+                ],
+                flashcards: [
+                    { q: "State the mathematical equation for the First Law of Thermodynamics.", a: "The energy conservation equation:<br><span class='formula-box math'>\\Delta U = Q - W</span><br>Where $\\Delta U$ is internal energy, $Q$ is heat added, and $W$ is work done." },
+                    { q: "How is maximum Carnot engine efficiency computed?", a: "Using absolute reservoir temperatures in Kelvin:<br><span class='formula-box math'>\\eta_{max} = 1 - \\frac{T_{cold}}{T_{hot}}</span>" },
+                    { q: "Differentiate between Isothermal and Adiabatic transformations.", a: "<strong>Isothermal:</strong> Temperature remains constant ($\\Delta T = 0, \\Delta U = 0$).<br><strong>Adiabatic:</strong> Zero thermal transfer across boundary ($Q = 0$).<br><span class='formula-box math'>P V^\\gamma = \\text{constant}</span>" }
+                ]
+            },
+            os: {
+                name: "Operating Systems",
+                text: "Module 2 OS Concurrency & Deadlocks: Four Coffman conditions must hold simultaneously for Deadlock: Mutual Exclusion, Hold and Wait, No Preemption, and Circular Wait. Banker's Algorithm determines system safe states with Allocation, Max, and Available resource vectors. Semaphore wait operation is denoted as P(S) while signal is V(S).",
+                summaries: [
+                    { label: "1. Coffman Deadlock Conditions", content: "A deadlock state requires <strong>all four</strong> conditions to hold simultaneously: Mutual Exclusion, Hold &amp; Wait, No Preemption, and Circular Wait." },
+                    { label: "2. Banker's Safety Invariant", content: "Resource allocation state verification for deadlock avoidance. The system computes process remaining need matrix:<br><span class='formula-box math'>\\text{Need}_i = \\text{Max}_i - \\text{Allocation}_i</span>" },
+                    { label: "3. Semaphore Synchronization Primitives", content: "Atomic counting primitives for critical section exclusion:<br><span class='formula-box math'>P(S) \\implies S = S - 1</span> (Wait/Acquire)<br><span class='formula-box math'>V(S) \\implies S = S + 1</span> (Signal/Release)" }
+                ],
+                flashcards: [
+                    { q: "Enumerate the four simultaneous Coffman conditions for system deadlock.", a: "1. <strong>Mutual Exclusion:</strong> Resources cannot be shared.<br>2. <strong>Hold and Wait:</strong> Process holds resource while requesting others.<br>3. <strong>No Preemption:</strong> Resources can only be released voluntarily.<br>4. <strong>Circular Wait:</strong> Closed chain of process dependency exists." },
+                    { q: "State the primary condition evaluated in the Banker's Algorithm.", a: "It evaluates whether there exists a valid sequence $\\langle P_1, P_2, \\dots, P_n \\rangle$ such that each process can satisfy its maximum resource requirements from currently available resources." },
+                    { q: "Define semaphore operations P(S) and V(S).", a: "<strong>P(S) (Proberen/Wait):</strong> Decrements semaphore counter $S$. If $S < 0$, calling thread blocks.<br><strong>V(S) (Verhogen/Signal):</strong> Increments counter $S$. If $S \\le 0$, wakes a waiting blocked thread." }
+                ]
+            },
+            dsa: {
+                name: "Data Structures",
+                text: "Algorithm Analysis: Master Theorem solves recurrence relations of form T(n) = a*T(n/b) + f(n). Binary Search Tree operations average O(log n) time complexity while worst-case unbalanced traversal degrades to O(n). AVL trees maintain balance factor BF = height(left) - height(right) within {-1, 0, +1}.",
+                summaries: [
+                    { label: "1. Master Theorem Recurrences", content: "Standard evaluation framework for divide-and-conquer recurrence relations:<br><span class='formula-box math'>T(n) = a T\\left(\\frac{n}{b}\\right) + f(n)</span>" },
+                    { label: "2. AVL Balance Factor Invariant", content: "Strict height-balancing constraint enforced via single and double rotations:<br><span class='formula-box math'>\\text{BF} = h(\\text{left}) - h(\\text{right}) \\in \\{-1, 0, +1\\}</span>" },
+                    { label: "3. Asymptotic Bounds", content: "Balanced binary search trees maintain average search in <span class='math'>\\mathcal{O}(\\log n)</span>, while degenerate skewed trees degrade to <span class='math'>\\mathcal{O}(n)</span>." }
+                ],
+                flashcards: [
+                    { q: "What is the general form of the Master Theorem recurrence relation?", a: "For divide-and-conquer algorithms:<br><span class='formula-box math'>T(n) = a T\\left(\\frac{n}{b}\\right) + \\Theta(n^k \\log^p n)</span><br>Where $a \\ge 1$ subproblems, $b > 1$ division factor." },
+                    { q: "How is an AVL Tree Balance Factor (BF) computed?", a: "The difference in height between left and right subtrees:<br><span class='formula-box math'>BF(v) = h(v_{left}) - h(v_{right})</span><br>Must strictly belong to $\\{-1, 0, +1\\}$ after every insertion/deletion." },
+                    { q: "Why does an unbalanced BST exhibit O(n) search time in the worst case?", a: "If keys are inserted in strictly ascending or descending order without rebalancing, the tree degrades into a linear single-chain linked list." }
+                ]
+            }
+        };
+
+        let currentDeck = [];
+        let cardIndex = 0;
+
+        function scrollToDashboard() {
+            const el = document.getElementById('dashboard');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function loadSampleData(key, el) {
+            const data = PRESETS[key];
+            if (!data) return;
+
+            document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+            if (el && el.classList) {
+                el.classList.add('active');
+            } else if (typeof event !== 'undefined' && event && event.target && event.target.classList) {
+                event.target.classList.add('active');
+            } else {
+                const matchingChip = Array.from(document.querySelectorAll('.preset-chip')).find(c => {
+                    const attr = c.getAttribute('onclick') || '';
+                    return attr.includes(`'${key}'`) || attr.includes(`"${key}"`);
+                });
+                if (matchingChip) matchingChip.classList.add('active');
+            }
+
+            const input = document.getElementById('lectureInput');
+            if (input) {
+                input.value = data.text;
+            }
+            const counter = document.getElementById('charCounter');
+            if (counter) {
+                counter.textContent = `${data.text.length} characters`;
+            }
+            
+            renderStudyKit(data.summaries, data.flashcards);
+        }
+
+        function generateStudyKit() {
+            const val = document.getElementById('lectureInput').value.trim();
+            if (!val) {
+                alert('Please input your lecture text or select a syllabus unit.');
+                return;
+            }
+
+            const summaries = [
+                { 
+                    label: "1. Core Academic Formulation", 
+                    content: `Extracted syllabus concept: <strong>${escapeHtml(val.slice(0, 50))}...</strong>` 
+                },
+                { 
+                    label: "2. Mathematical Constraint", 
+                    content: `Primary governing equation:<br><span class='formula-box math'>f(x) = \\sum_{i=1}^n x_i \\cdot w_i</span>` 
+                },
+                { 
+                    label: "3. Examination Watchout", 
+                    content: "Verify boundary conditions and initial values before applying algebraic simplification." 
+                }
+            ];
+
+            const flashcards = [
+                { q: `State the fundamental takeaway from this syllabus unit:`, a: `It defines operational bounds and constraints for: ${escapeHtml(val.slice(0, 60))}...` },
+                { q: `What governing relation applies to this system?`, a: `The system satisfies:<br><span class='formula-box math'>\\oint_C \\mathbf{F} \\cdot d\\mathbf{r} = \\iint_S (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S}</span>` },
+                { q: `What boundary condition must be verified?`, a: `Ensure regularity and continuity at all domain interfaces before proceeding with integration.` }
+            ];
+
+            document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+            renderStudyKit(summaries, flashcards);
+        }
+
+        function renderStudyKit(summaries, flashcards) {
+            const sumContainer = document.getElementById('summaryContainer');
+            if (sumContainer) {
+                sumContainer.innerHTML = summaries.map(s => `
+                    <div class="summary-card">
+                        <span class="summary-tag">${s.label}</span>
+                        <div class="summary-content">${s.content}</div>
+                    </div>
+                `).join('');
+            }
+
+            currentDeck = flashcards;
+            cardIndex = 0;
+            updateDeckView();
+            renderEquations();
+        }
+
+        function flipCard() {
+            const el = document.getElementById('flashcardModel');
+            if (el) el.classList.toggle('flipped');
+        }
+
+        function nextCard() {
+            if (cardIndex < currentDeck.length - 1) {
+                const model = document.getElementById('flashcardModel');
+                if (model) model.classList.remove('flipped');
+                setTimeout(() => {
+                    cardIndex++;
+                    updateDeckView();
+                    renderEquations();
+                }, 140);
+            }
+        }
+
+        function prevCard() {
+            if (cardIndex > 0) {
+                const model = document.getElementById('flashcardModel');
+                if (model) model.classList.remove('flipped');
+                setTimeout(() => {
+                    cardIndex--;
+                    updateDeckView();
+                    renderEquations();
+                }, 140);
+            }
+        }
+
+        function updateDeckView() {
+            if (currentDeck.length === 0) return;
+            const current = currentDeck[cardIndex];
+            
+            const qEl = document.getElementById('fcQuestion');
+            const aEl = document.getElementById('fcAnswer');
+            if (qEl) qEl.innerHTML = current.q;
+            if (aEl) aEl.innerHTML = current.a;
+            
+            const counter = document.getElementById('deckCounter');
+            if (counter) counter.textContent = `Card ${cardIndex + 1} / ${currentDeck.length}`;
+            
+            const dotsContainer = document.getElementById('deckDots');
+            if (dotsContainer) {
+                dotsContainer.innerHTML = currentDeck.map((_, i) => `
+                    <div class="deck-dot ${i === cardIndex ? 'active' : ''}"></div>
+                `).join('');
+            }
+
+            const btnP = document.getElementById('btnPrev');
+            const btnN = document.getElementById('btnNext');
+            if (btnP) btnP.disabled = (cardIndex === 0);
+            if (btnN) btnN.disabled = (cardIndex === currentDeck.length - 1);
+        }
+
+        function renderEquations() {
+            if (window.renderMathInElement) {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: "$$", right: "$$", display: true },
+                        { left: "$", right: "$", display: false },
+                        { left: "\\(", right: "\\)", display: false },
+                        { left: "\\[", right: "\\]", display: true }
+                    ],
+                    throwOnError: false
+                });
+
+                document.querySelectorAll('.math').forEach(el => {
+                    if (!el.dataset.rendered) {
+                        try { 
+                            katex.render(el.textContent, el, { throwOnError: false, displayMode: false }); 
+                            el.dataset.rendered = "true"; 
+                        } catch(e) {}
+                    }
+                });
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Keyboard navigation for active recall desk
+        document.addEventListener('keydown', (e) => {
+            if (document.activeElement && (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT')) {
+                return;
+            }
+            if (e.code === 'Space') {
+                e.preventDefault();
+                flipCard();
+            } else if (e.code === 'ArrowRight') {
+                nextCard();
+            } else if (e.code === 'ArrowLeft') {
+                prevCard();
+            }
+        });
+
+        // Initialize with default thermo preset on load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSampleData('thermo');
+        });
+    </script>
+</body>
+</html>

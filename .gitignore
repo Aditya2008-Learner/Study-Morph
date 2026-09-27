@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.log
+node_modules/
+.env.local
+*.db
+*.db-wal
+*.db-shm
+.env/
+
+# Scratch marker written by tooling, not part of the project
+.headroom_wrap_marker.json
+
+# Unrelated promo-video assets (~7MB of media); not referenced by the app
+brag-output/
+

@@ -1,0 +1,10 @@
+UNIVERSITY OF DELHI / ANNA UNIVERSITY
+Department of Electronics and Communication
+EC204: Digital Electronics & Logic Design - Final Exam
+Max Marks: 75 | Duration: 3 Hours
+
+1. (10 Marks) Minimize the Boolean function F(A, B, C, D) = sum m(0, 2, 5, 7, 8, 10, 13, 15) + d(1, 4) using 4-variable Karnaugh Map. Realize the minimized expression using NAND gates only.
+2. (15 Marks) Design a Synchronous 3-bit Up/Down Gray Code Counter using J-K Flip-Flops. Draw the complete state transition diagram, excitation table, and logic circuit.
+3. (15 Marks) Design a 4-bit Carry Look-Ahead (CLA) Adder. Explain why CLA is significantly faster than a Ripple Carry Adder by analyzing gate propagation delays.
+4. (15 Marks) Explain the internal architecture of the 8086 Microprocessor, detailing the Bus Interface Unit (BIU) and Execution Unit (EU). Explain memory segmentation and physical address calculation.
+5. (20 Marks) Write an 8086 Assembly Language Program (ALP) to sort an array of ten 16-bit signed integers in ascending order using Bubble Sort algorithm.

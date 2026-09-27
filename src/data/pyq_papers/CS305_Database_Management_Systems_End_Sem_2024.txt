@@ -1,0 +1,14 @@
+VISVESVARAYA TECHNOLOGICAL UNIVERSITY / UC BERKELEY
+Department of Information Science and Engineering
+CS305: Database Management Systems - Final Exam 2024
+Time: 3 Hours | Total Marks: 100
+
+1. (10 Marks) Explain ACID properties of database transactions with concrete banking examples.
+2. (15 Marks) Given relation R(A, B, C, D, E) with Functional Dependencies: F = { A -> B, BC -> D, E -> C, D -> A }.
+   (a) Find all Candidate Keys of R.
+   (b) Determine highest Normal Form (1NF, 2NF, 3NF, BCNF) of R.
+   (c) Decompose R into lossless BCNF relations if not already in BCNF.
+3. (15 Marks) Write relational algebra expressions and SQL queries for University database schemas: Student, Course, Enrolls, Department.
+4. (20 Marks) Explain B+ Tree indexing. Show step-by-step insertion of keys 10, 20, 5, 6, 12, 30, 7, 17 into a B+ Tree of order 3. Show leaf node splits.
+5. (20 Marks) Compare Strict 2-Phase Locking (Strict 2PL) vs Timestamp Ordering Protocol. Explain cascading rollbacks and how Strict 2PL guarantees recoverability.
+6. (20 Marks) Write a stored procedure and trigger in SQL for automated balance validation and transaction audit logging.

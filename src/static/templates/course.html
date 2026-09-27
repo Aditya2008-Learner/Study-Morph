@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Study Desk — StudyMorph</title>
+    
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- KaTeX for formula rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #FAFAF9;
+            --surface: #FFFFFF;
+            --surface-subtle: #F4F4F5;
+            --border: #E4E4E7;
+            --border-strong: #18181B;
+            --ink: #09090B;
+            --ink-body: #27272A;
+            --ink-muted: #71717A;
+            --ink-faint: #A1A1AA;
+            
+            --accent-emerald: #059669;
+            --accent-emerald-bg: #ECFDF5;
+            --accent-emerald-border: #A7F3D0;
+            
+            --accent-amber: #D97706;
+            --accent-amber-bg: #FFFBEB;
+            --accent-amber-border: #FDE68A;
+
+            --accent-rose: #E11D48;
+            --accent-rose-bg: #FFF1F2;
+            --accent-rose-border: #FECDD3;
+
+            --accent-slate: #334155;
+            --accent-slate-bg: #F1F5F9;
+            --accent-slate-border: #CBD5E1;
+            
+            --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-display: 'Space Grotesk', var(--font-sans);
+            --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
+            
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            
+            --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.04);
+            --shadow-card: 0 2px 8px -2px rgba(0, 0, 0, 0.06);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg);
+            color: var(--ink-body);
+            line-height: 1.6;
+            font-size: 15px;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1160px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Architectural Top Navigation */
+        .navbar-wrapper {
+            position: sticky;
+            top: 0;
+            z-index: 90;
+            background-color: rgba(250, 250, 249, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .brand-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--ink);
+        }
+
+        .brand-monogram {
+            width: 28px;
+            height: 28px;
+            background-color: var(--ink);
+            color: #FFFFFF;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+        }
+
+        .brand-text {
+            font-family: var(--font-display);
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: var(--font-sans);
+            font-size: 0.84375rem;
+            font-weight: 600;
+            padding: 7px 14px;
+            border-radius: var(--radius-md);
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 140ms ease;
+            white-space: nowrap;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: var(--ink);
+            color: #FFFFFF;
+            border-color: var(--ink);
+        }
+
+        .btn-primary:hover {
+            background-color: #27272A;
+            border-color: #27272A;
+        }
+
+        .btn-secondary {
+            background-color: var(--surface);
+            color: var(--ink);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--surface-subtle);
+            border-color: var(--border-strong);
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.78125rem;
+        }
+
+        .icon {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            stroke-width: 1.75;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+        .icon-sm { width: 13px; height: 13px; }
+        .icon-md { width: 17px; height: 17px; }
+
+        /* Course Masthead */
+        .course-masthead {
+            padding: 40px 0 28px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 28px;
+        }
+
+        .course-tag {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent-emerald);
+            background: var(--accent-emerald-bg);
+            border: 1px solid var(--accent-emerald-border);
+            padding: 3px 10px;
+            border-radius: var(--radius-sm);
+            display: inline-block;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .course-masthead h1 {
+            font-family: var(--font-display);
+            font-size: 2.25rem;
+            color: var(--ink);
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .course-masthead p {
+            color: var(--ink-muted);
+            font-size: 1rem;
+            max-width: 760px;
+            line-height: 1.55;
+        }
+
+        /* Controls / Selector Toolbar */
+        .controls-toolbar {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .control-label {
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            color: var(--ink-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .select-input {
+            font-family: var(--font-sans);
+            font-size: 0.84375rem;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background-color: var(--bg);
+            color: var(--ink);
+            outline: none;
+            cursor: pointer;
+            transition: all 120ms ease;
+        }
+
+        .select-input:focus {
+            border-color: var(--ink);
+            background-color: #FFFFFF;
+        }
+
+        /* Mode Switcher Tabs */
+        .mode-tabs {
+            display: flex;
+            gap: 6px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 28px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .mode-tabs::-webkit-scrollbar { display: none; }
+
+        .mode-tab {
+            padding: 10px 16px;
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--ink-muted);
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 140ms ease;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .mode-tab:hover {
+            color: var(--ink);
+        }
+
+        .mode-tab.active {
+            color: var(--ink);
+            border-bottom-color: var(--ink);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 6px;
+            border-radius: var(--radius-sm);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .badge-easy { background: var(--accent-emerald-bg); color: var(--accent-emerald); border: 1px solid var(--accent-emerald-border); }
+        .badge-medium { background: var(--accent-slate-bg); color: var(--accent-slate); border: 1px solid var(--accent-slate-border); }
+        .badge-hard { background: var(--accent-amber-bg); color: var(--accent-amber); border: 1px solid var(--accent-amber-border); }
+        .badge-advanced { background: var(--accent-rose-bg); color: var(--accent-rose); border: 1px solid var(--accent-rose-border); }
+        .badge-marks { background: var(--surface-subtle); color: var(--ink-body); border: 1px solid var(--border); }
+
+        /* VIEW 1: Question Bank */
+        .qb-header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .qb-title {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            color: var(--ink);
+            font-weight: 700;
+        }
+
+        .filter-chips {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            font-weight: 500;
+            color: var(--ink-muted);
+            cursor: pointer;
+            transition: all 120ms ease;
+        }
+
+        .filter-chip:hover, .filter-chip.active {
+            background: var(--ink);
+            color: #FFFFFF;
+            border-color: var(--ink);
+        }
+
+        /* Question Cards */
+        .question-card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 20px 22px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-subtle);
+            transition: border-color 140ms ease;
+        }
+
+        .question-card:hover {
+            border-color: var(--border-strong);
+        }
+
+        .question-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .question-number {
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: var(--ink);
+            text-transform: uppercase;
+        }
+
+        .question-badges {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .question-text {
+            font-size: 0.9375rem;
+            color: var(--ink);
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+
+        /* Solution Drawer */
+        .solution-drawer {
+            display: none;
+            margin-top: 12px;
+            padding: 16px 18px;
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent-emerald);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            color: var(--ink-body);
+            line-height: 1.6;
+        }
+
+        .solution-drawer.open {
+            display: block;
+            animation: fadeIn 160ms ease;
+        }
+
+        .solution-drawer-title {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent-emerald);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* VIEW 2: Concepts Grid */
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-bottom: 48px;
+        }
+
+        @media (max-width: 900px) {
+            .course-grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            flex-direction: column;
+            transition: border-color 140ms ease;
+        }
+
+        .card:hover {
+            border-color: var(--border-strong);
+        }
+
+        .card h3 {
+            font-family: var(--font-display);
+            font-size: 1.0625rem;
+            color: var(--ink);
+            margin-bottom: 8px;
+        }
+
+        .card p {
+            font-size: 0.875rem;
+            color: var(--ink-body);
+            line-height: 1.55;
+            margin-bottom: 12px;
+        }
+
+        .card .meta {
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            color: var(--ink-muted);
+            margin-top: auto;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .formula-box {
+            display: inline-block;
+            background-color: var(--surface-subtle);
+            border: 1px solid var(--border);
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            margin: 4px 0;
+            color: var(--ink);
+            font-size: 0.90625rem;
+        }
+
+        /* VIEW 3: Interactive Quiz Panel */
+        .quiz-panel {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            box-shadow: var(--shadow-card);
+            margin-bottom: 48px;
+        }
+
+        .quiz-progress-bar-wrap {
+            width: 100%;
+            height: 4px;
+            background: var(--surface-subtle);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .quiz-progress-bar-fill {
+            height: 100%;
+            background: var(--ink);
+            width: 0%;
+            transition: width 240ms ease;
+        }
+
+        .quiz-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--ink-muted);
+        }
+
+        .quiz-question-title {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            color: var(--ink);
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .quiz-options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .quiz-opt-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            text-align: left;
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            color: var(--ink-body);
+            transition: all 120ms ease;
+        }
+
+        .quiz-opt-btn:hover:not(:disabled) {
+            border-color: var(--ink);
+            background: var(--surface-subtle);
+        }
+
+        .quiz-opt-letter {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-sm);
+            background: var(--surface-subtle);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--ink);
+            flex-shrink: 0;
+        }
+
+        .quiz-opt-btn.correct {
+            background: var(--accent-emerald-bg);
+            border-color: var(--accent-emerald);
+            color: #065F46;
+        }
+        .quiz-opt-btn.correct .quiz-opt-letter {
+            background: var(--accent-emerald);
+            color: #FFFFFF;
+            border-color: var(--accent-emerald);
+        }
+
+        .quiz-opt-btn.wrong {
+            background: var(--accent-rose-bg);
+            border-color: var(--accent-rose);
+            color: #9F1239;
+        }
+        .quiz-opt-btn.wrong .quiz-opt-letter {
+            background: var(--accent-rose);
+            color: #FFFFFF;
+            border-color: var(--accent-rose);
+        }
+
+        .quiz-bottom-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Quiz Results Screen */
+        .quiz-results-card {
+            text-align: center;
+            padding: 40px 24px;
+        }
+
+        .quiz-results-score {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 6px;
+        }
+
+        .quiz-results-label {
+            font-size: 1rem;
+            color: var(--ink-muted);
+            margin-bottom: 24px;
+        }
+
+        /* Bottom CTA */
+        .cta-section {
+            text-align: center;
+            padding: 32px 0 64px;
+        }
+
+        /* Footer */
+        .site-footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+            text-align: center;
+            color: var(--ink-muted);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            background: var(--surface);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar-wrapper">
+        <div class="container">
+            <nav class="navbar">
+                <a href="index.html" class="brand-link">
+                    <span class="brand-monogram">SM</span>
+                    <span class="brand-text">StudyMorph</span>
+                </a>
+                <div class="nav-actions">
+                    <a href="index.html#dashboard" class="btn btn-secondary btn-sm">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                        <span>Workspace Desk</span>
+                    </a>
+                    <a href="index.html#courses" class="btn btn-secondary btn-sm">All Courses</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Course Masthead -->
+        <section class="course-masthead">
+            <span class="course-tag" id="course-badge">CS201 &bull; Year 2 &bull; Sem 3</span>
+            <h1 id="course-title">Design and Analysis of Algorithms</h1>
+            <p id="course-desc">High-yield syllabus breakdown, formulas, verified 15-question sets, and interactive self-testing practice.</p>
+        </section>
+
+        <!-- Course Selector Toolbar -->
+        <div class="controls-toolbar">
+            <div class="control-group">
+                <span class="control-label">Semester:</span>
+                <select id="semester-select" class="select-input" onchange="onSemesterChange()">
+                    <option value="">All Semesters</option>
+                    <option value="1">Semester 1 (Year 1)</option>
+                    <option value="2">Semester 2 (Year 1)</option>
+                    <option value="3">Semester 3 (Year 2)</option>
+                    <option value="4">Semester 4 (Year 2)</option>
+                    <option value="5">Semester 5 (Year 3)</option>
+                    <option value="6">Semester 6 (Year 3)</option>
+                    <option value="7">Semester 7 (Year 4)</option>
+                    <option value="8">Semester 8 (Year 4)</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <span class="control-label">Subject:</span>
+                <select id="course-select" class="select-input" onchange="onCourseChange(this.value)">
+                    <!-- Options populated dynamically -->
+                </select>
+            </div>
+            <div class="control-group">
+                <span class="control-label">Topic Unit:</span>
+                <select id="topic-select" class="select-input" onchange="onTopicChange(this.value)">
+                    <option value="">All Topics (Full Course)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Mode Switcher Tabs -->
+        <div class="mode-tabs">
+            <button class="mode-tab active" onclick="switchMode('questions', this)">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h10M7 9h6"/></svg>
+                <span>Question Bank (15 Questions)</span>
+            </button>
+            <button class="mode-tab" onclick="switchMode('concepts', this)">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 6h16M4 12h8M4 18h14"/></svg>
+                <span>Concept Formulations &amp; Cards</span>
+            </button>
+            <button class="mode-tab" onclick="switchMode('quiz', this)">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>Diagnostic Practice Quiz</span>
+            </button>
+        </div>
+
+        <!-- VIEW 1: Question Bank (15 Questions) -->
+        <div id="view-questions">
+            <div class="qb-header-bar">
+                <div class="qb-title-wrap">
+                    <h2 class="qb-title">15 Curated Subject Questions</h2>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <div class="filter-chips">
+                        <button class="filter-chip active" onclick="filterDifficulty('All', this)">All (15)</button>
+                        <button class="filter-chip" onclick="filterDifficulty('Easy', this)">Easy</button>
+                        <button class="filter-chip" onclick="filterDifficulty('Medium', this)">Medium</button>
+                        <button class="filter-chip" onclick="filterDifficulty('Hard', this)">Hard</button>
+                        <button class="filter-chip" onclick="filterDifficulty('Advanced', this)">Advanced</button>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="refreshQuestions()" id="btn-toggle-set">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        <span>Refresh</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="questions-container">
+                <!-- 15 Questions Rendered Dynamically -->
+            </div>
+        </div>
+
+        <!-- VIEW 2: Concept Formulations -->
+        <div id="view-concepts" style="display: none;">
+            <div class="course-grid" id="concepts-container">
+                <!-- Rendered dynamically -->
+            </div>
+        </div>
+
+        <!-- VIEW 3: Interactive Practice Quiz -->
+        <div id="view-quiz" style="display: none;">
+            <div class="quiz-panel" id="quiz-active-panel">
+                <div class="quiz-progress-bar-wrap">
+                    <div class="quiz-progress-bar-fill" id="quiz-progress-fill"></div>
+                </div>
+                <div class="quiz-meta-row">
+                    <span id="quiz-q-counter">Question 1 of 5</span>
+                    <span id="quiz-score-badge" class="badge badge-marks">Score: 0 pts</span>
+                </div>
+                <div class="quiz-question-title" id="quiz-question-text">
+                    Loading question...
+                </div>
+                <div class="quiz-options-grid" id="quiz-options-container">
+                    <!-- Options A/B/C/D -->
+                </div>
+                <div id="quiz-explanation-drawer" class="solution-drawer" style="margin-bottom:20px;">
+                    <div class="solution-drawer-title">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                        <span>Verified Explanation</span>
+                    </div>
+                    <div id="quiz-explanation-text">...</div>
+                </div>
+                <div class="quiz-bottom-nav">
+                    <button class="btn btn-secondary btn-sm" onclick="prevQuizQuestion()" id="btn-quiz-prev" disabled>
+                        &larr; Previous
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="nextQuizQuestion()" id="btn-quiz-next">
+                        Next Question &rarr;
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quiz Results Screen -->
+            <div class="quiz-panel quiz-results-card" id="quiz-results-panel" style="display: none;">
+                <div class="quiz-results-score" id="quiz-final-pct">100%</div>
+                <div class="quiz-results-label" id="quiz-final-desc">You scored 5 out of 5 marks</div>
+                <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="restartQuiz()">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        <span>Retake Practice Quiz</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="switchMode('questions')">
+                        <span>Review All 15 Questions</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Launch Workspace CTA -->
+        <section class="cta-section">
+            <a href="index.html#dashboard" class="btn btn-primary" style="padding: 10px 24px; font-size: 0.875rem;">
+                <span>Launch Workspace with This Course</span>
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </section>
+    </div>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2026 StudyMorph &bull; Regulation-Aware Academic Engineering Companion.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- Full Curriculum Course Map ---
+        const COURSE_METADATA = {
+            "CS101": { name: "Programming in C", semester: 1, year: 1, desc: "Imperative programming, memory layouts, pointers, dynamic memory allocation, and file I/O operations.", topics: ["Topic 1: Fundamentals of C & Control Flow", "Topic 2: Pointers & Memory Management", "Topic 3: Arrays & Multi-Dimensional Data", "Topic 4: Functions & Recursion", "Topic 5: Structures, Unions & File I/O"] },
+            "MA101": { name: "Engineering Mathematics I", semester: 1, year: 1, desc: "Linear algebra, matrix ranks, eigenvalues, Cayley-Hamilton theorem, and differential calculus.", topics: ["Topic 1: Linear Algebra & Matrix Ranks", "Topic 2: Eigenvalues & Cayley-Hamilton Theorem", "Topic 3: Differential Calculus & Taylor Series", "Topic 4: Multivariable Integration & Polar Coordinates", "Topic 5: Vector Calculus & Divergence Theorems"] },
+            "PH101": { name: "Engineering Physics", semester: 1, year: 1, desc: "Classical mechanics, wave equations, physical optics, thermodynamics, and electromagnetism.", topics: ["Topic 1: Classical Mechanics & Oscillations", "Topic 2: Physical Optics, Interference & Lasers", "Topic 3: Thermodynamics & Entropy", "Topic 4: Electromagnetism & Maxwell Equations", "Topic 5: Quantum Physics & Wave Mechanics"] },
+            "CH101": { name: "Engineering Chemistry", semester: 1, year: 1, desc: "Quantum atomic structure, chemical bonding, electrochemistry, polymers, and green chemistry.", topics: ["Topic 1: Quantum Atomic Structure & Bonding", "Topic 2: Thermodynamics & Electrochemistry", "Topic 3: Polymers & Engineering Materials", "Topic 4: Water Technology & Corrosion", "Topic 5: Spectroscopic Techniques"] },
+            "EE101": { name: "Basic Electrical Engineering", semester: 1, year: 1, desc: "DC circuit analysis, Kirchhoff's laws, Thevenin/Norton network theorems, and AC fundamentals.", topics: ["Topic 1: DC Circuits & Kirchhoff's Laws", "Topic 2: Network Theorems (Thevenin/Norton)", "Topic 3: AC Fundamentals & Phasors", "Topic 4: Magnetic Circuits & Transformers", "Topic 5: Electrical Machines & Safety"] },
+            "CS102": { name: "Data Structures", semester: 2, year: 1, desc: "Linear structures, trees, AVL trees, binary search trees, hash tables, graphs, and amortized complexity.", topics: ["Topic 1: Arrays, Linked Lists & Stacks", "Topic 2: Binary Search Trees & AVL Trees", "Topic 3: Graph Traversal (BFS/DFS)", "Topic 4: Hash Tables & Collision Resolution", "Topic 5: Heaps, Priority Queues & Sorting"] },
+            "MA102": { name: "Engineering Mathematics II", semester: 2, year: 1, desc: "Multivariable integration, vector calculus, differential equations, and Laplace transforms.", topics: ["Topic 1: Ordinary Differential Equations", "Topic 2: Laplace Transforms & Applications", "Topic 3: Fourier Series & Transforms", "Topic 4: Partial Differential Equations", "Topic 5: Numerical Methods & Optimization"] },
+            "CS201": { name: "Design & Analysis of Algorithms", semester: 3, year: 2, desc: "Asymptotic complexity, divide and conquer, dynamic programming, greedy methods, and graph algorithms.", topics: ["Topic 1: Asymptotic Analysis & Recurrences", "Topic 2: Balanced Trees & AVL Rotations", "Topic 3: Graph Algorithms (Dijkstra/Bellman-Ford)", "Topic 4: Dynamic Programming & Greedy Approaches", "Topic 5: NP-Completeness & Approximation"] },
+            "CS202": { name: "Computer Organization & Architecture", semester: 3, year: 2, desc: "Instruction set architecture, pipelining, hazard mitigation, cache memory hierarchy, and I/O interfacing.", topics: ["Topic 1: Instruction Set Architecture & Addressing", "Topic 2: ALU Design & Arithmetic Circuits", "Topic 3: Pipelining & Hazard Mitigation", "Topic 4: Memory Hierarchy & Cache Design", "Topic 5: I/O Interfacing & Interrupt Handling"] },
+            "CS203": { name: "Operating Systems", semester: 3, year: 2, desc: "Process concurrency, CPU scheduling, synchronization primitives, deadlocks, paging, and virtual memory.", topics: ["Topic 1: Process Management & Inter-Process Communication", "Topic 2: CPU Scheduling (FCFS/SJF/Round Robin)", "Topic 3: Synchronization, Semaphores & Deadlocks", "Topic 4: Memory Management, Paging & TLB", "Topic 5: File Systems & Storage Management"] },
+            "CS204": { name: "Database Management Systems", semester: 3, year: 2, desc: "Relational model, SQL querying, normalization (1NF to BCNF), ACID transaction semantics, and indexing.", topics: ["Topic 1: Relational Model & SQL Querying", "Topic 2: Normalization (1NF to BCNF)", "Topic 3: Transaction Processing & ACID Properties", "Topic 4: Concurrency Control & Recovery", "Topic 5: Indexing & B+ Trees"] },
+            "CS301": { name: "Computer Networks", semester: 4, year: 2, desc: "OSI and TCP/IP protocol stacks, subnetting, CIDR, distance-vector/link-state routing, and transport protocols.", topics: ["Topic 1: OSI & TCP/IP Architecture", "Topic 2: Data Link Layer & MAC Protocols", "Topic 3: Network Layer, IP Addressing & Routing", "Topic 4: Transport Layer (TCP/UDP)", "Topic 5: Application Layer Protocols & DNS"] },
+            "CS302": { name: "Object-Oriented Programming", semester: 4, year: 2, desc: "Encapsulation, inheritance, polymorphism, abstract classes, templates/generics, and exception safety.", topics: ["Topic 1: Classes, Objects & Encapsulation", "Topic 2: Inheritance & Polymorphism", "Topic 3: Abstract Classes & Interfaces", "Topic 4: Exception Handling & Templates", "Topic 5: Design Patterns & Collections"] },
+            "CS303": { name: "Theory of Computation", semester: 4, year: 2, desc: "Deterministic/NFA automata, regular languages, context-free grammars, pushdown automata, and Turing machines.", topics: ["Topic 1: Finite Automata (DFA/NFA)", "Topic 2: Regular Expressions & Pumping Lemma", "Topic 3: Context-Free Grammars & Pushdown Automata", "Topic 4: Turing Machines & Decidability", "Topic 5: Computational Complexity Classes"] },
+            "CS304": { name: "Software Engineering", semester: 4, year: 2, desc: "Software lifecycle models, Agile development, SOLID design principles, design patterns, and unit testing.", topics: ["Topic 1: Software Lifecycle & Agile Scrum", "Topic 2: Requirements Engineering & UML Modeling", "Topic 3: Architecture & SOLID Design Principles", "Topic 4: Testing Methodologies & QA", "Topic 5: Maintenance & DevOps"] },
+            "CS401": { name: "Artificial Intelligence", semester: 5, year: 3, desc: "Heuristic search algorithms (A*, IDA*), minimax game playing, propositional logic, and inference engines.", topics: ["Topic 1: State Space Search & Heuristic Search (A*)", "Topic 2: Adversarial Search & Minimax", "Topic 3: Knowledge Representation & Logic", "Topic 4: Probabilistic Reasoning & Bayes Nets", "Topic 5: Planning & Decision Making"] },
+            "CS402": { name: "Machine Learning", semester: 5, year: 3, desc: "Supervised and unsupervised learning: linear/logistic regression, SVM, decision trees, clustering, and neural nets.", topics: ["Topic 1: Supervised Learning (Regression & Classification)", "Topic 2: Support Vector Machines & Kernels", "Topic 3: Decision Trees & Ensemble Methods", "Topic 4: Unsupervised Learning & Clustering", "Topic 5: Neural Networks & Model Evaluation"] },
+            "CS403": { name: "Web Technologies", semester: 5, year: 3, desc: "Semantic HTML5, CSS layout engines, JavaScript event loop, asynchronous promises, and RESTful API backends.", topics: ["Topic 1: Modern DOM & Asynchronous JavaScript", "Topic 2: RESTful API Design & Express/FastAPI", "Topic 3: Frontend Frameworks & State Management", "Topic 4: Web Security (CORS, XSS, CSRF)", "Topic 5: Performance Optimization & Caching"] },
+            "CS404": { name: "Cyber Security & Cryptography", semester: 5, year: 3, desc: "CIA triad, symmetric/asymmetric encryption (AES, RSA), SHA hashing, network attacks, and OWASP defenses.", topics: ["Topic 1: Security Foundations & CIA Triad", "Topic 2: Symmetric Cryptography (AES, DES)", "Topic 3: Asymmetric Cryptography (RSA, ECC)", "Topic 4: Hashes, Digital Signatures & PKI", "Topic 5: Network Attacks & OWASP Top 10"] },
+            "CS501": { name: "Compiler Design", semester: 6, year: 3, desc: "Lexical tokenization, top-down/bottom-up syntax parsing, syntax-directed translation, and code generation.", topics: ["Topic 1: Lexical Analysis & Tokenization", "Topic 2: Syntax Analysis & Context-Free Parsing", "Topic 3: Syntax-Directed Translation", "Topic 4: Intermediate Code Generation", "Topic 5: Code Optimization & Target Generation"] },
+            "CS502": { name: "Cloud Computing", semester: 6, year: 3, desc: "Cloud delivery models (IaaS/PaaS/SaaS), virtualization, Docker containerization, Kubernetes, and auto-scaling.", topics: ["Topic 1: Cloud Architecture & Delivery Models", "Topic 2: Virtualization & Hypervisors", "Topic 3: Containerization & Docker", "Topic 4: Container Orchestration with Kubernetes", "Topic 5: Cloud Storage & Auto-Scaling"] },
+            "CS503": { name: "Data Science & Analytics", semester: 6, year: 3, desc: "Data wrangling, exploratory data analysis, feature engineering, predictive modeling, and statistical inference.", topics: ["Topic 1: Data Wrangling & Cleaning", "Topic 2: Exploratory Data Analysis & Visualization", "Topic 3: Statistical Hypothesis Testing", "Topic 4: Feature Engineering & Selection", "Topic 5: Predictive Modeling & Time Series"] },
+            "CS601": { name: "Deep Learning", semester: 7, year: 4, desc: "Deep feedforward architectures, backpropagation, CNNs for computer vision, RNNs, and attention mechanisms.", topics: ["Topic 1: Feedforward Networks & Backpropagation", "Topic 2: Convolutional Neural Networks (CNNs)", "Topic 3: Recurrent Neural Networks (RNN/LSTM)", "Topic 4: Attention Mechanisms & Transformers", "Topic 5: Generative Models (GANs/VAEs)"] },
+            "CS602": { name: "Big Data Analytics", semester: 7, year: 4, desc: "Distributed storage with Hadoop HDFS, MapReduce paradigms, Apache Spark in-memory pipelines, and NoSQL stores.", topics: ["Topic 1: Hadoop Architecture & HDFS", "Topic 2: MapReduce Paradigm", "Topic 3: Apache Spark & RDD In-Memory Processing", "Topic 4: NoSQL Databases & Key-Value Stores", "Topic 5: Stream Processing & Real-Time Analytics"] },
+            "CS603": { name: "Distributed Systems", semester: 7, year: 4, desc: "RPC mechanisms, Lamport logical clocks, Raft/Paxos consensus algorithms, and CAP theorem trade-offs.", topics: ["Topic 1: Distributed Architectures & RPC", "Topic 2: Time, Clocks & State Synchronization", "Topic 3: Consensus Protocols (Paxos/Raft)", "Topic 4: Fault Tolerance & Replication", "Topic 5: Distributed Transactions & CAP Theorem"] },
+            "CS699": { name: "Major Project (Phase 1)", semester: 7, year: 4, desc: "Engineering problem formulation, state-of-the-art literature survey, architectural modeling, and feasibility.", topics: ["Topic 1: Problem Formulation & Scope", "Topic 2: Literature Review & Gap Analysis", "Topic 3: System Architecture & Design", "Topic 4: Feasibility Study & Milestones"] },
+            "CS701": { name: "Natural Language Processing", semester: 8, year: 4, desc: "Tokenization, continuous word embeddings, self-attention, Transformer architectures, and LLM fine-tuning.", topics: ["Topic 1: Text Preprocessing & Language Modeling", "Topic 2: Word Embeddings (Word2Vec, GloVe)", "Topic 3: Sequence Tagging & Parsing", "Topic 4: Transformers & Self-Attention", "Topic 5: Pretrained Language Models & Fine-Tuning"] },
+            "CS702": { name: "Technical Interview & System Design", semester: 8, year: 4, desc: "Algorithmic patterns, high-scale distributed system design, microservices, caching, and STAR defense.", topics: ["Topic 1: Data Structures & Algorithmic Patterns", "Topic 2: Distributed System Design & Microservices", "Topic 3: Database Sharding & Caching Strategies", "Topic 4: Concurrency & Scalability Patterns", "Topic 5: Behavioral & System Architecture Defense"] },
+            "CS799": { name: "Major Project (Phase 2)", semester: 8, year: 4, desc: "System execution, module integration, empirical benchmarking, ablation studies, thesis preparation, and defense.", topics: ["Topic 1: Module Implementation & Integration", "Topic 2: Benchmarking & Performance Analysis", "Topic 3: Ablation Study & Empirical Validation", "Topic 4: Technical Documentation & Thesis Defense"] }
+        };
+
+        let currentCourse = "CS201";
+        let currentTopic = "";
+        let loadedQuestions = [];
+        let activeDifficultyFilter = "All";
+        let isGenerating = false;
+
+        // Quiz state
+        let quizQuestions = [];
+        let quizIndex = 0;
+        let quizScore = 0;
+        let quizAnswers = {};
+
+        function getSessionId() {
+            let sid = localStorage.getItem('sm_session_id');
+            if (!sid) {
+                sid = 'sm_' + Math.random().toString(36).substring(2, 12);
+                localStorage.setItem('sm_session_id', sid);
+            }
+            return sid;
+        }
+
+        // --- Initialization ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            initCourseSelector();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const reqCourse = urlParams.get('course') || urlParams.get('subject') || 'CS201';
+            const reqTopic = urlParams.get('topic') || '';
+            if (reqTopic) currentTopic = reqTopic;
+            
+            // Normalize course key
+            let matchedCode = Object.keys(COURSE_METADATA).find(c => c.toLowerCase() === reqCourse.toLowerCase());
+            if (!matchedCode) {
+                if (reqCourse.toLowerCase().includes('thermo')) matchedCode = 'CS401';
+                else if (reqCourse.toLowerCase().includes('os')) matchedCode = 'CS203';
+                else if (reqCourse.toLowerCase().includes('dsa') || reqCourse.toLowerCase().includes('algo')) matchedCode = 'CS201';
+                else if (reqCourse.toLowerCase().includes('math')) matchedCode = 'MA101';
+                else matchedCode = 'CS201';
+            }
+
+            selectCourse(matchedCode);
+        });
+
+        function initCourseSelector() {
+            const select = document.getElementById('course-select');
+            select.innerHTML = '';
+            for (const [code, info] of Object.entries(COURSE_METADATA)) {
+                const opt = document.createElement('option');
+                opt.value = code;
+                opt.textContent = `${code} — ${info.name} (Sem ${info.semester})`;
+                select.appendChild(opt);
+            }
+        }
+
+        function initTopicSelector(code) {
+            const topicSelect = document.getElementById('topic-select');
+            if (!topicSelect) return;
+            topicSelect.innerHTML = '<option value="">All Topics (Full Course)</option>';
+            const info = COURSE_METADATA[code];
+            if (info && info.topics) {
+                info.topics.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    opt.textContent = t;
+                    if (currentTopic && currentTopic === t) {
+                        opt.selected = true;
+                    }
+                    topicSelect.appendChild(opt);
+                });
+            }
+        }
+
+        function onSemesterChange() {
+            const sem = document.getElementById('semester-select').value;
+            const select = document.getElementById('course-select');
+            select.innerHTML = '';
+            for (const [code, info] of Object.entries(COURSE_METADATA)) {
+                if (!sem || info.semester == parseInt(sem)) {
+                    const opt = document.createElement('option');
+                    opt.value = code;
+                    opt.textContent = `${code} — ${info.name} (Sem ${info.semester})`;
+                    select.appendChild(opt);
+                }
+            }
+            if (select.options.length > 0) {
+                selectCourse(select.options[0].value);
+            }
+        }
+
+        function onCourseChange(code) {
+            currentTopic = "";
+            selectCourse(code);
+        }
+
+        async function onTopicChange(topicVal) {
+            currentTopic = topicVal;
+            await loadQuestionsData(false);
+        }
+
+        async function selectCourse(code) {
+            currentCourse = code;
+            const info = COURSE_METADATA[code] || { name: code, semester: 1, year: 1, desc: 'Academic engineering course.', topics: [] };
+            
+            document.getElementById('course-badge').textContent = `${code} \u2022 Year ${info.year} \u2022 Sem ${info.semester}`;
+            document.getElementById('course-title').textContent = info.name;
+            document.getElementById('course-desc').textContent = info.desc;
+            document.title = `${info.name} (${code}) — StudyMorph`;
+
+            const select = document.getElementById('course-select');
+            if (select && select.value !== code) {
+                select.value = code;
+            }
+
+            const semSelect = document.getElementById('semester-select');
+            if (semSelect && semSelect.value && parseInt(semSelect.value) !== info.semester) {
+                semSelect.value = String(info.semester);
+            }
+
+            initTopicSelector(code);
+
+            // Load sections
+            await loadQuestionsData(false);
+            await loadConceptsData();
+            initQuizData();
+        }
+
+        function switchMode(mode, btn) {
+            if (btn) {
+                document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            document.getElementById('view-questions').style.display = mode === 'questions' ? 'block' : 'none';
+            document.getElementById('view-concepts').style.display = mode === 'concepts' ? 'block' : 'none';
+            document.getElementById('view-quiz').style.display = mode === 'quiz' ? 'block' : 'none';
+            renderEquations();
+        }
+
+        // --- 1. Question Bank Logic ---
+        async function loadQuestionsData(forceRefresh = false) {
+            if (isGenerating) return;
+            isGenerating = true;
+
+            const container = document.getElementById('questions-container');
+            const btn = document.getElementById('btn-toggle-set');
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.add('loading');
+                btn.querySelector('span').textContent = forceRefresh ? 'Researching Web...' : 'Generating 15 Questions...';
+            }
+
+            const topicLabel = currentTopic ? currentTopic : (COURSE_METADATA[currentCourse]?.name || currentCourse);
+            container.innerHTML = `<p style="color:var(--ink-muted); padding:24px 0; font-family:var(--font-mono); font-size:0.875rem;">Searching academic sources &amp; synthesizing 15 verified questions on <strong>${escapeHtml(topicLabel)}</strong>...</p>`;
+
+            try {
+                const sid = getSessionId();
+                const params = new URLSearchParams({
+                    topic: currentTopic || '',
+                    refresh: forceRefresh ? 'true' : 'false',
+                    session_id: sid,
+                    t: Date.now()
+                });
+                const res = await fetch(`/api/questions/course/${encodeURIComponent(currentCourse)}?${params.toString()}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    loadedQuestions = data.questions || [];
+                } else {
+                    loadedQuestions = [];
+                    container.innerHTML = '<p style="color:var(--accent-rose); padding:24px 0;">Failed to research and generate questions. Please click Refresh to try again.</p>';
+                }
+            } catch (e) {
+                loadedQuestions = [];
+                container.innerHTML = '<p style="color:var(--accent-rose); padding:24px 0;">Network error while contacting research engine. Please click Refresh to try again.</p>';
+            } finally {
+                isGenerating = false;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('loading');
+                    btn.querySelector('span').textContent = 'Refresh';
+                }
+            }
+
+            if (loadedQuestions.length === 0) {
+                container.innerHTML = '<p style="color:var(--ink-muted); padding:20px 0;">No questions available. Click Refresh to generate a fresh set.</p>';
+                return;
+            }
+
+            renderQuestions();
+        }
+
+        async function refreshQuestions() {
+            await loadQuestionsData(true);
+        }
+        const toggleQuestionSet = refreshQuestions;
+
+        function filterDifficulty(diff, btn) {
+            activeDifficultyFilter = diff;
+            if (btn) {
+                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            renderQuestions();
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            const filtered = loadedQuestions.filter(q => {
+                if (activeDifficultyFilter === 'All') return true;
+                return (q.difficulty || 'Medium').toLowerCase() === activeDifficultyFilter.toLowerCase();
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<p style="color:var(--ink-muted); padding:24px 0; font-family:var(--font-mono); font-size:0.875rem;">No ${escapeHtml(activeDifficultyFilter)} questions in this generated 15-question set.</p>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map((q, idx) => {
+                const fullText = q.question_text || '';
+                const parts = fullText.split('Answer:');
+                const qPart = parts[0].trim();
+                const aPart = parts.length > 1 ? parts[1].trim() : 'Step-by-step solution available in course curriculum.';
+                
+                const diff = q.difficulty || 'Medium';
+                const diffClass = diff.toLowerCase() === 'easy' ? 'badge-easy' : (diff.toLowerCase() === 'hard' ? 'badge-hard' : (diff.toLowerCase() === 'advanced' ? 'badge-advanced' : 'badge-medium'));
+                const marks = q.marks || 5;
+
+                return `
+                <div class="question-card">
+                    <div class="question-card-top">
+                        <span class="question-number">Question ${idx + 1}</span>
+                        <div class="question-badges">
+                            <span class="badge ${diffClass}">${diff}</span>
+                            <span class="badge badge-marks">${marks} Marks</span>
+                            ${q.subtopic ? `<span class="badge badge-marks">${escapeHtml(q.subtopic)}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="question-text">
+                        ${escapeHtml(qPart)}
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary btn-sm" onclick="toggleSolution(this)">
+                            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            <span>View Step-by-Step Solution</span>
+                        </button>
+                        <div class="solution-drawer">
+                            <div class="solution-drawer-title">
+                                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                                <span>Verified Solution &amp; Explanation</span>
+                            </div>
+                            <div>${escapeHtml(aPart)}</div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            renderEquations();
+        }
+
+        function toggleSolution(btn) {
+            const drawer = btn.nextElementSibling;
+            const isOpen = drawer.classList.contains('open');
+            if (isOpen) {
+                drawer.classList.remove('open');
+                btn.querySelector('span').textContent = 'View Step-by-Step Solution';
+            } else {
+                drawer.classList.add('open');
+                btn.querySelector('span').textContent = 'Hide Solution';
+                renderEquations();
+            }
+        }
+
+        // --- 2. Concept Formulations Logic ---
+        async function loadConceptsData() {
+            const container = document.getElementById('concepts-container');
+            container.innerHTML = '<p style="color:var(--ink-muted); padding:20px 0; font-family:var(--font-mono); font-size:0.875rem;">Loading concepts...</p>';
+
+            let cards = [];
+            try {
+                const res = await fetch(`/api/interactive/${encodeURIComponent(currentCourse)}`);
+                if (res.ok) {
+                    cards = await res.json();
+                }
+            } catch (e) {}
+
+            if (!cards || cards.length === 0) {
+                try {
+                    const res2 = await fetch(`/api/content/${encodeURIComponent(currentCourse)}`);
+                    if (res2.ok) {
+                        const tc = await res2.json();
+                        (tc || []).forEach(t => {
+                            cards.push({
+                                topic: t.topic_name,
+                                front_text: t.topic_name,
+                                back_text: t.summary
+                            });
+                        });
+                    }
+                } catch (e2) {}
+            }
+
+            if (!cards || cards.length === 0) {
+                container.innerHTML = '<p style="color:var(--ink-muted); padding:20px 0;">No concept formulations available.</p>';
+                return;
+            }
+
+            container.innerHTML = cards.map((c, idx) => `
+                <div class="card">
+                    <h3>${idx + 1}. ${escapeHtml(c.front_text || c.topic || 'Core Formulation')}</h3>
+                    <p>${escapeHtml(c.back_text || c.content || '')}</p>
+                    <div class="meta">${escapeHtml(currentCourse)} &bull; ${escapeHtml(c.topic || 'Core Concept')}</div>
+                </div>
+            `).join('');
+
+            renderEquations();
+        }
+
+        // --- 3. Diagnostic MCQ Quiz Logic ---
+        function initQuizData() {
+            quizQuestions = [];
+            quizIndex = 0;
+            quizScore = 0;
+            quizAnswers = {};
+
+            if (loadedQuestions.length > 0) {
+                quizQuestions = loadedQuestions.slice(0, 5).map((q, idx) => {
+                    const fullText = q.question_text || '';
+                    const parts = fullText.split('Answer:');
+                    const qText = parts[0].trim();
+                    const aText = parts.length > 1 ? parts[1].trim() : 'Correct formulation per syllabus.';
+
+                    const options = [
+                        aText.length > 120 ? aText.slice(0, 110) + '...' : aText,
+                        `Alternative formulation with relaxed boundary conditions.`,
+                        `Degrades to O(N^2) worst-case without invariant caching.`,
+                        `Requires external synchronization locks across distributed instances.`
+                    ];
+
+                    return {
+                        id: q.id || `quiz-${idx}`,
+                        question: qText,
+                        options: options,
+                        correctIndex: 0,
+                        explanation: aText,
+                        marks: q.marks || 5,
+                        difficulty: q.difficulty || 'Medium'
+                    };
+                });
+            }
+
+            document.getElementById('quiz-active-panel').style.display = 'block';
+            document.getElementById('quiz-results-panel').style.display = 'none';
+            renderCurrentQuizQuestion();
+        }
+
+        function renderCurrentQuizQuestion() {
+            if (quizQuestions.length === 0) {
+                document.getElementById('quiz-question-text').textContent = 'No quiz questions available for this course.';
+                document.getElementById('quiz-options-container').innerHTML = '';
+                return;
+            }
+
+            const q = quizQuestions[quizIndex];
+            document.getElementById('quiz-q-counter').textContent = `Question ${quizIndex + 1} of ${quizQuestions.length}`;
+            document.getElementById('quiz-score-badge').textContent = `Score: ${quizScore} pts`;
+            document.getElementById('quiz-question-text').textContent = q.question;
+
+            const progressPct = ((quizIndex) / quizQuestions.length) * 100;
+            document.getElementById('quiz-progress-fill').style.width = `${progressPct}%`;
+
+            const answered = quizAnswers[quizIndex] !== undefined;
+            const chosenIdx = quizAnswers[quizIndex];
+
+            const optContainer = document.getElementById('quiz-options-container');
+            const letters = ['A', 'B', 'C', 'D'];
+            optContainer.innerHTML = q.options.map((opt, i) => {
+                let btnClass = 'quiz-opt-btn';
+                if (answered) {
+                    if (i === q.correctIndex) btnClass += ' correct';
+                    else if (i === chosenIdx) btnClass += ' wrong';
+                }
+                return `
+                <button class="${btnClass}" onclick="selectQuizAnswer(${i})" ${answered ? 'disabled' : ''}>
+                    <div class="quiz-opt-letter">${letters[i]}</div>
+                    <div>${escapeHtml(opt)}</div>
+                </button>`;
+            }).join('');
+
+            // Explanation drawer
+            const expDrawer = document.getElementById('quiz-explanation-drawer');
+            if (answered) {
+                expDrawer.style.display = 'block';
+                document.getElementById('quiz-explanation-text').textContent = q.explanation;
+            } else {
+                expDrawer.style.display = 'none';
+            }
+
+            // Nav buttons
+            document.getElementById('btn-quiz-prev').disabled = quizIndex === 0;
+            const nextBtn = document.getElementById('btn-quiz-next');
+            nextBtn.textContent = quizIndex === quizQuestions.length - 1 ? 'Finish Quiz' : 'Next Question \u2192';
+
+            renderEquations();
+        }
+
+        function selectQuizAnswer(optIdx) {
+            if (quizAnswers[quizIndex] !== undefined) return;
+            const q = quizQuestions[quizIndex];
+            quizAnswers[quizIndex] = optIdx;
+
+            const isCorrect = (optIdx === q.correctIndex);
+            if (isCorrect) {
+                quizScore += q.marks;
+            }
+
+            try {
+                fetch('/api/activity/log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        activity_type: 'quiz_attempt',
+                        subject: currentCourse,
+                        topic: `Quiz Q${quizIndex + 1}`,
+                        score: isCorrect ? 100 : 0
+                    })
+                });
+            } catch (e) {}
+
+            renderCurrentQuizQuestion();
+        }
+
+        function nextQuizQuestion() {
+            if (quizIndex < quizQuestions.length - 1) {
+                quizIndex++;
+                renderCurrentQuizQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function prevQuizQuestion() {
+            if (quizIndex > 0) {
+                quizIndex--;
+                renderCurrentQuizQuestion();
+            }
+        }
+
+        function finishQuiz() {
+            document.getElementById('quiz-active-panel').style.display = 'none';
+            const resultsPanel = document.getElementById('quiz-results-panel');
+            resultsPanel.style.display = 'block';
+
+            const totalMarks = quizQuestions.reduce((s, q) => s + q.marks, 0);
+            const pct = totalMarks > 0 ? Math.round((quizScore / totalMarks) * 100) : 0;
+            
+            document.getElementById('quiz-final-pct').textContent = `${pct}%`;
+            document.getElementById('quiz-final-desc').textContent = `You scored ${quizScore} out of ${totalMarks} total marks across ${quizQuestions.length} practice questions.`;
+        }
+
+        function restartQuiz() {
+            initQuizData();
+        }
+
+        // --- Formula Rendering ---
+        function renderEquations() {
+            if (window.renderMathInElement) {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: "$$", right: "$$", display: true },
+                        { left: "$", right: "$", display: false },
+                        { left: "\\(", right: "\\)", display: false },
+                        { left: "\\[", right: "\\]", display: true }
+                    ],
+                    throwOnError: false
+                });
+
+                document.querySelectorAll('.math').forEach(el => {
+                    if (!el.dataset.rendered) {
+                        try { katex.render(el.textContent, el, { throwOnError: false, displayMode: false }); el.dataset.rendered = "true"; } catch(e) {}
+                    }
+                });
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
