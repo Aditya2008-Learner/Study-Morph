@@ -216,6 +216,22 @@ class TestRemovedRoutes(unittest.TestCase):
         paths = {r.path for r in router.routes}
         self.assertNotIn("/api/questions/generate/pyq-similar", paths)
 
+    def test_orphan_frontend_bundle_is_deleted(self):
+        import os
+        base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src", "static")
+        for rel in ("js/app.js", "js/theme.js", "css/styles.css", "css/components.css"):
+            path = os.path.join(base, rel.replace("/", os.sep))
+            self.assertFalse(os.path.exists(path), f"orphan still present: {rel}")
+
+    def test_served_templates_do_not_reference_orphan_bundle(self):
+        import os
+        tdir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src", "static", "templates")
+        for name in ("index.html", "course.html"):
+            with open(os.path.join(tdir, name), encoding="utf-8", errors="ignore") as fh:
+                html = fh.read()
+            for orphan in ("app.js", "theme.js", "styles.css", "components.css"):
+                self.assertNotIn(orphan, html, f"{name} still references {orphan}")
+
 
 class TestQuizEngine(unittest.TestCase):
     def setUp(self):
