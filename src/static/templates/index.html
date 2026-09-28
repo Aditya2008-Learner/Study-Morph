@@ -1112,7 +1112,8 @@
                             <div class="pane-header">
                                 <label for="lectureInput" class="mono-label" style="color: var(--ink);">Raw Lecture Notes / Syllabus Unit</label>
                             </div>
-                            <textarea id="lectureInput" class="editor-textarea" placeholder="Paste your raw lecture notes, theorem definitions, or syllabus excerpt here..."></textarea>
+                            <textarea id="lectureInput" class="editor-textarea" placeholder="Type anything: a topic, a concept, a misspelling, an abbreviation..."></textarea>
+                            <div id="studyKitError" class="char-counter" style="color: var(--accent-amber); min-height: 1.2em; margin-top: 6px;"></div>
                             <div class="input-footer">
                                 <span class="char-counter" id="charCounter">Ready</span>
                                 <button class="btn btn-brand" onclick="generateStudyKit()">
@@ -1338,44 +1339,14 @@
             thermo: {
                 name: "Thermodynamics",
                 text: "Unit 3 Engineering Thermodynamics: First Law governs Conservation of Energy stating dU = dQ - dW. The Second Law introduces Entropy dS >= dQ/T for all spontaneous cycles. Carnot efficiency represents maximum theoretical limit: eta = 1 - (T_cold / T_hot). Isothermal processes have dT = 0 while Adiabatic processes operate under dQ = 0.",
-                summaries: [
-                    { label: "1. First Law of Thermodynamics", content: "Conservation of energy formulation. Internal energy change equals heat supplied minus work done by system:<br><span class='formula-box math'>\\Delta U = Q - W</span>" },
-                    { label: "2. Second Law & Entropy Criterion", content: "Isolated system entropy monotonically increases. Spontaneous processes are irreversible:<br><span class='formula-box math'>\\Delta S \\ge \\int \\frac{\\delta Q}{T}</span>" },
-                    { label: "3. Maximum Carnot Efficiency", content: "Theoretical upper bound on heat engine conversion efficiency operating between thermal reservoirs:<br><span class='formula-box math'>\\eta_{max} = 1 - \\frac{T_{C}}{T_{H}}</span>" }
-                ],
-                flashcards: [
-                    { q: "State the mathematical equation for the First Law of Thermodynamics.", a: "The energy conservation equation:<br><span class='formula-box math'>\\Delta U = Q - W</span><br>Where $\\Delta U$ is internal energy, $Q$ is heat added, and $W$ is work done." },
-                    { q: "How is maximum Carnot engine efficiency computed?", a: "Using absolute reservoir temperatures in Kelvin:<br><span class='formula-box math'>\\eta_{max} = 1 - \\frac{T_{cold}}{T_{hot}}</span>" },
-                    { q: "Differentiate between Isothermal and Adiabatic transformations.", a: "<strong>Isothermal:</strong> Temperature remains constant ($\\Delta T = 0, \\Delta U = 0$).<br><strong>Adiabatic:</strong> Zero thermal transfer across boundary ($Q = 0$).<br><span class='formula-box math'>P V^\\gamma = \\text{constant}</span>" }
-                ]
             },
             os: {
                 name: "Operating Systems",
                 text: "Module 2 OS Concurrency & Deadlocks: Four Coffman conditions must hold simultaneously for Deadlock: Mutual Exclusion, Hold and Wait, No Preemption, and Circular Wait. Banker's Algorithm determines system safe states with Allocation, Max, and Available resource vectors. Semaphore wait operation is denoted as P(S) while signal is V(S).",
-                summaries: [
-                    { label: "1. Coffman Deadlock Conditions", content: "A deadlock state requires <strong>all four</strong> conditions to hold simultaneously: Mutual Exclusion, Hold &amp; Wait, No Preemption, and Circular Wait." },
-                    { label: "2. Banker's Safety Invariant", content: "Resource allocation state verification for deadlock avoidance. The system computes process remaining need matrix:<br><span class='formula-box math'>\\text{Need}_i = \\text{Max}_i - \\text{Allocation}_i</span>" },
-                    { label: "3. Semaphore Synchronization Primitives", content: "Atomic counting primitives for critical section exclusion:<br><span class='formula-box math'>P(S) \\implies S = S - 1</span> (Wait/Acquire)<br><span class='formula-box math'>V(S) \\implies S = S + 1</span> (Signal/Release)" }
-                ],
-                flashcards: [
-                    { q: "Enumerate the four simultaneous Coffman conditions for system deadlock.", a: "1. <strong>Mutual Exclusion:</strong> Resources cannot be shared.<br>2. <strong>Hold and Wait:</strong> Process holds resource while requesting others.<br>3. <strong>No Preemption:</strong> Resources can only be released voluntarily.<br>4. <strong>Circular Wait:</strong> Closed chain of process dependency exists." },
-                    { q: "State the primary condition evaluated in the Banker's Algorithm.", a: "It evaluates whether there exists a valid sequence $\\langle P_1, P_2, \\dots, P_n \\rangle$ such that each process can satisfy its maximum resource requirements from currently available resources." },
-                    { q: "Define semaphore operations P(S) and V(S).", a: "<strong>P(S) (Proberen/Wait):</strong> Decrements semaphore counter $S$. If $S < 0$, calling thread blocks.<br><strong>V(S) (Verhogen/Signal):</strong> Increments counter $S$. If $S \\le 0$, wakes a waiting blocked thread." }
-                ]
             },
             dsa: {
                 name: "Data Structures",
                 text: "Algorithm Analysis: Master Theorem solves recurrence relations of form T(n) = a*T(n/b) + f(n). Binary Search Tree operations average O(log n) time complexity while worst-case unbalanced traversal degrades to O(n). AVL trees maintain balance factor BF = height(left) - height(right) within {-1, 0, +1}.",
-                summaries: [
-                    { label: "1. Master Theorem Recurrences", content: "Standard evaluation framework for divide-and-conquer recurrence relations:<br><span class='formula-box math'>T(n) = a T\\left(\\frac{n}{b}\\right) + f(n)</span>" },
-                    { label: "2. AVL Balance Factor Invariant", content: "Strict height-balancing constraint enforced via single and double rotations:<br><span class='formula-box math'>\\text{BF} = h(\\text{left}) - h(\\text{right}) \\in \\{-1, 0, +1\\}</span>" },
-                    { label: "3. Asymptotic Bounds", content: "Balanced binary search trees maintain average search in <span class='math'>\\mathcal{O}(\\log n)</span>, while degenerate skewed trees degrade to <span class='math'>\\mathcal{O}(n)</span>." }
-                ],
-                flashcards: [
-                    { q: "What is the general form of the Master Theorem recurrence relation?", a: "For divide-and-conquer algorithms:<br><span class='formula-box math'>T(n) = a T\\left(\\frac{n}{b}\\right) + \\Theta(n^k \\log^p n)</span><br>Where $a \\ge 1$ subproblems, $b > 1$ division factor." },
-                    { q: "How is an AVL Tree Balance Factor (BF) computed?", a: "The difference in height between left and right subtrees:<br><span class='formula-box math'>BF(v) = h(v_{left}) - h(v_{right})</span><br>Must strictly belong to $\\{-1, 0, +1\\}$ after every insertion/deletion." },
-                    { q: "Why does an unbalanced BST exhibit O(n) search time in the worst case?", a: "If keys are inserted in strictly ascending or descending order without rebalancing, the tree degrades into a linear single-chain linked list." }
-                ]
             }
         };
 
@@ -1392,75 +1363,102 @@
             if (!data) return;
 
             document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
-            if (el && el.classList) {
-                el.classList.add('active');
-            } else if (typeof event !== 'undefined' && event && event.target && event.target.classList) {
-                event.target.classList.add('active');
-            } else {
-                const matchingChip = Array.from(document.querySelectorAll('.preset-chip')).find(c => {
-                    const attr = c.getAttribute('onclick') || '';
-                    return attr.includes(`'${key}'`) || attr.includes(`"${key}"`);
-                });
-                if (matchingChip) matchingChip.classList.add('active');
-            }
+            const chip = el && el.classList ? el : (typeof event !== 'undefined' && event ? event.target : null);
+            if (chip && chip.classList) chip.classList.add('active');
 
             const input = document.getElementById('lectureInput');
             if (input) {
                 input.value = data.text;
+                input.focus();
             }
             const counter = document.getElementById('charCounter');
             if (counter) {
                 counter.textContent = `${data.text.length} characters`;
             }
-            
-            renderStudyKit(data.summaries, data.flashcards);
         }
 
-        function generateStudyKit() {
-            const val = document.getElementById('lectureInput').value.trim();
-            if (!val) {
-                alert('Please input your lecture text or select a syllabus unit.');
+        async function generateStudyKit() {
+            const input = document.getElementById('lectureInput');
+            const raw = input ? input.value.trim() : '';
+            const errEl = document.getElementById('studyKitError');
+            if (errEl) errEl.textContent = '';
+
+            if (!raw) {
+                if (errEl) errEl.textContent = 'Type a topic, concept, or question keyword.';
                 return;
             }
 
-            const summaries = [
-                { 
-                    label: "1. Core Academic Formulation", 
-                    content: `Extracted syllabus concept: <strong>${escapeHtml(val.slice(0, 50))}...</strong>` 
-                },
-                { 
-                    label: "2. Mathematical Constraint", 
-                    content: `Primary governing equation:<br><span class='formula-box math'>f(x) = \\sum_{i=1}^n x_i \\cdot w_i</span>` 
-                },
-                { 
-                    label: "3. Examination Watchout", 
-                    content: "Verify boundary conditions and initial values before applying algebraic simplification." 
+            const btn = document.querySelector('.btn-brand');
+            const label = btn ? btn.querySelector('span') : null;
+            const original = label ? label.textContent : '';
+            if (btn) btn.disabled = true;
+            if (label) label.textContent = 'Searching...';
+
+            try {
+                const res = await fetch('/api/search?q=' + encodeURIComponent(raw));
+                if (res.status === 400) {
+                    const body = await res.json().catch(() => ({}));
+                    if (errEl) errEl.textContent = body.detail || 'Type a topic, concept, or question keyword.';
+                    return;
                 }
-            ];
+                if (!res.ok) throw new Error('Search failed (' + res.status + ')');
 
-            const flashcards = [
-                { q: `State the fundamental takeaway from this syllabus unit:`, a: `It defines operational bounds and constraints for: ${escapeHtml(val.slice(0, 60))}...` },
-                { q: `What governing relation applies to this system?`, a: `The system satisfies:<br><span class='formula-box math'>\\oint_C \\mathbf{F} \\cdot d\\mathbf{r} = \\iint_S (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S}</span>` },
-                { q: `What boundary condition must be verified?`, a: `Ensure regularity and continuity at all domain interfaces before proceeding with integration.` }
-            ];
-
-            document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
-            renderStudyKit(summaries, flashcards);
+                const data = await res.json();
+                document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+                const counter = document.getElementById('charCounter');
+                if (counter) counter.textContent = `${data.total} result${data.total === 1 ? '' : 's'}`;
+                renderStudyKit(data.results || [], data.topic_context || null);
+            } catch (e) {
+                if (errEl) errEl.textContent = 'Search is unavailable right now. Is the server running?';
+            } finally {
+                if (btn) btn.disabled = false;
+                if (label) label.textContent = original;
+            }
         }
 
-        function renderStudyKit(summaries, flashcards) {
-            const sumContainer = document.getElementById('summaryContainer');
-            if (sumContainer) {
-                sumContainer.innerHTML = summaries.map(s => `
-                    <div class="summary-card">
-                        <span class="summary-tag">${s.label}</span>
-                        <div class="summary-content">${s.content}</div>
-                    </div>
-                `).join('');
+        function renderStudyKit(results, topicContext) {
+            const feed = document.getElementById('summaryContainer');
+
+            if (feed) {
+                let html = '';
+                if (topicContext) {
+                    html += `<div class="summary-card">
+                        <span class="summary-tag">${escapeHtml(topicContext.subject || '')} &mdash; ${escapeHtml(topicContext.topic || '')}</span>
+                        <div class="summary-content">${escapeHtml(topicContext.summary || '')}</div>
+                    </div>`;
+                    (topicContext.key_points || []).slice(0, 5).forEach(kp => {
+                        const text = typeof kp === 'string' ? kp : (kp.point || kp.text || JSON.stringify(kp));
+                        html += `<div class="summary-card">
+                            <span class="summary-tag">Key Point</span>
+                            <div class="summary-content">${escapeHtml(text)}</div>
+                        </div>`;
+                    });
+                }
+                results.filter(r => r.source_type === 'question').slice(0, 8).forEach((q, n) => {
+                    const marks = q.marks ? ` &middot; ${escapeHtml(String(q.marks))} marks` : '';
+                    html += `<div class="summary-card">
+                        <span class="summary-tag">Q${n + 1} &middot; ${escapeHtml(q.difficulty || '')}${marks}</span>
+                        <div class="summary-content">${escapeHtml(q.text || '')}</div>
+                    </div>`;
+                });
+                feed.innerHTML = html || '<div class="summary-card"><div class="summary-content">No matches. Try a topic like AVL, Dijkstra, or deadlocks.</div></div>';
+                renderEquations();
             }
 
-            currentDeck = flashcards;
+            const cards = (topicContext && topicContext.flashcards) || [];
+            currentDeck = cards.map(c => ({
+                q: escapeHtml(c.front || c.question || ''),
+                a: escapeHtml(c.back || c.answer || '')
+            }));
             cardIndex = 0;
+            if (currentDeck.length === 0) {
+                currentDeck = [{
+                    q: 'No flashcards matched this query.',
+                    a: 'Try a broader topic such as AVL, Dijkstra, or deadlocks.'
+                }];
+            }
+            const model = document.getElementById('flashcardModel');
+            if (model) model.classList.remove('flipped');
             updateDeckView();
             renderEquations();
         }

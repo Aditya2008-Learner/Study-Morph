@@ -195,6 +195,10 @@ class TestDatabaseAndCurriculum(unittest.TestCase):
             self.assertIn(key, rows[0])
 
 
+class _OldFrontendIntegrityPlaceholder(unittest.TestCase):
+    pass
+
+
 class TestRemovedRoutes(unittest.TestCase):
     """Routes deleted by the cleanup must be gone, not silently returning null."""
 
@@ -397,11 +401,41 @@ class TestSearchEndpoint(unittest.TestCase):
         self.assertLessEqual(len(r.json()["results"]), 3)
 
 
+class _OldFrontendIntegrityPlaceholder(unittest.TestCase):
+    pass
+
+
 class TestFrontendIntegrity(unittest.TestCase):
     def setUp(self):
         template_path = os.path.join(ROOT_DIR, "src", "static", "templates", "index.html")
         with open(template_path, "r", encoding="utf-8") as f:
             self.index_html = f.read()
+
+    def test_generate_study_kit_calls_the_search_api(self):
+        i = self.index_html.index("function generateStudyKit")
+        body = self.index_html[i:i + 3000]
+        self.assertIn("/api/search", body, "generateStudyKit still does not call the backend")
+        self.assertNotIn("alert(", body, "must not use alert(); render an inline error")
+
+    def test_presets_no_longer_carry_hardcoded_output(self):
+        i = self.index_html.index("const PRESETS")
+        j = self.index_html.index("function loadSampleData")
+        presets = self.index_html[i:j]
+        self.assertNotIn("summaries", presets, "PRESETS still hardcodes summaries")
+        self.assertNotIn("flashcards", presets, "PRESETS still hardcodes flashcards")
+        self.assertIn("text", presets, "PRESETS must keep its real lecture text")
+
+    def test_flashcard_deck_contract_is_preserved(self):
+        """The single-card 3D deck is existing behaviour; it must not be replaced."""
+        for token in ("currentDeck", "function updateDeckView", "function flipCard",
+                      "flashcardModel", "fcQuestion", "fcAnswer"):
+            self.assertIn(token, self.index_html, f"flashcard deck contract broken: {token}")
+        self.assertNotIn("flashcardContainer", self.index_html,
+                         "do not replace the single-card deck with a card list")
+
+    def test_study_desk_has_an_error_element(self):
+        self.assertIn('id="studyKitError"', self.index_html,
+                      "no inline error element for failed searches")
 
     def test_navbar_anchors_exist_problem_002(self):
         # Problem 002 fix verification: navbar links must point to existing section IDs
