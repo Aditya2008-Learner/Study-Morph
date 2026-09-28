@@ -297,6 +297,65 @@ class TestRemovedRoutes(unittest.TestCase):
         self.assertNotIn("qgen", src)
 
 
+class TestRAGIndex(unittest.TestCase):
+    def _fresh(self):
+        from src.backend.rag_engine import RAGIndex
+        idx = RAGIndex()
+        idx.rebuild_index()
+        return idx
+
+    def test_index_covers_the_real_corpus(self):
+        idx = self._fresh()
+        self.assertGreater(len(idx.chunks), 1500,
+                           "expected 1740 questions + 57 topics + 84 flashcards")
+        kinds = {c.doc_type for c in idx.chunks}
+        self.assertEqual(kinds, {"question", "topic", "flashcard"}, f"got {kinds}")
+
+    def test_search_finds_avl_by_typo(self):
+        from src.backend.rag_engine import RAGIndex
+        results = RAGIndex().search("avl tree rottaions")
+        self.assertTrue(results, "typo'd query returned nothing")
+        blob = " ".join(r["text"].lower() for r in results)
+        self.assertIn("avl", blob, f"typo query missed AVL; got: {blob[:200]}")
+
+    def test_search_finds_by_prefix(self):
+        from src.backend.rag_engine import RAGIndex
+        results = RAGIndex().search("prog")
+        self.assertTrue(results, "prefix query returned nothing")
+
+    def test_search_returns_difficulty_and_marks(self):
+        from src.backend.rag_engine import RAGIndex
+        results = RAGIndex().search("operating system deadlock")
+        questions = [r for r in results if r["source_type"] == "question"]
+        self.assertTrue(questions)
+        self.assertIn("difficulty", questions[0])
+        self.assertIn("marks", questions[0])
+
+    def test_gibberish_returns_empty_not_exception(self):
+        from src.backend.rag_engine import RAGIndex
+        self.assertEqual(RAGIndex().search("zxcvqw nonsense"), [])
+
+    def test_stopword_only_query_returns_empty(self):
+        # Every token here is in the tokenizer's stopword list or under the
+        # 3-char cutoff, so nothing survives tokenization. (Note: "what" is NOT
+        # a safe example for this - it is a real corpus term, so a query
+        # containing it legitimately matches.)
+        from src.backend.rag_engine import RAGIndex
+        self.assertEqual(RAGIndex().search("the of and"), [])
+        self.assertEqual(RAGIndex().search("is are was were"), [])
+
+    def test_empty_query_returns_empty(self):
+        from src.backend.rag_engine import RAGIndex
+        self.assertEqual(RAGIndex().search(""), [])
+
+    def test_topic_context_is_populated(self):
+        from src.backend.rag_engine import RAGIndex
+        ctx = RAGIndex().get_topic_context("dynamic programming knapsack")
+        self.assertIsNotNone(ctx)
+        for key in ("summary", "formulas", "key_points"):
+            self.assertIn(key, ctx)
+
+
 class TestFrontendIntegrity(unittest.TestCase):
     def setUp(self):
         template_path = os.path.join(ROOT_DIR, "src", "static", "templates", "index.html")
