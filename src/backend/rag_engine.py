@@ -1,5 +1,6 @@
 import os
 import re
+import threading
 from typing import List, Dict, Any, Optional
 
 from ..c_core.c_bridge import fast_batch_bm25, fast_fuzzy_similarity, fast_levenshtein
@@ -59,6 +60,11 @@ class RAGIndex:
     FUZZY_THRESHOLD = 0.80
 
     _instance = None
+    # Guards rebuild_index() so two concurrent first-time requests cannot interleave
+    # a mutation of self.chunks with another thread's read of it. Without this,
+    # concurrent /api/search calls returned inconsistent result counts.
+    # Must be re-entrant: search() holds it across a rebuild_index() call.
+    _build_lock = threading.RLock()
 
     def __init__(self):
         self.chunks = []
@@ -74,49 +80,56 @@ class RAGIndex:
         return cls._instance
 
     def rebuild_index(self):
-        self.chunks = []
-        self.doc_frequencies = {}
-        self.topic_rows = {}
+        # Build into locals, then swap in one assignment. Readers either see the
+        # complete previous index or the complete new one, never a partial one.
+        with self._build_lock:
+            chunks = []
+            topic_rows = {}
 
-        for q in DatabaseRepo.get_question_bank_for_index():
-            self._add_chunks(
-                q["id"], q["question_text"][:80], "question", q["question_text"],
-                q.get("topic", ""), subject=q.get("subject", ""), topic=q.get("topic", ""),
-                difficulty=q.get("difficulty", ""), marks=q.get("marks", 0),
-            )
+            for q in DatabaseRepo.get_question_bank_for_index():
+                self._add_chunks_into(
+                    chunks, q["id"], q["question_text"][:80], "question", q["question_text"],
+                    q.get("topic", ""), subject=q.get("subject", ""), topic=q.get("topic", ""),
+                    difficulty=q.get("difficulty", ""), marks=q.get("marks", 0),
+                )
 
-        for t in DatabaseRepo.get_all_topics():
-            self._add_chunks(
-                t["id"], f"{t['course_code']} — {t['topic_name']}", "topic", _topic_blob(t),
-                t["topic_name"], subject=t["course_code"], topic=t["topic_name"],
-            )
-            self.topic_rows[t["id"]] = t
+            for t in DatabaseRepo.get_all_topics():
+                self._add_chunks_into(
+                    chunks, t["id"], f"{t['course_code']} — {t['topic_name']}", "topic",
+                    _topic_blob(t), t["topic_name"],
+                    subject=t["course_code"], topic=t["topic_name"],
+                )
+                topic_rows[t["id"]] = t
 
-        for f in DatabaseRepo.get_all_interactive_content():
-            blob = f"{f.get('front_text', '')} {f.get('back_text', '')}"
-            self._add_chunks(
-                f["id"], f"{f.get('front_text', '')[:80]}", "flashcard", blob,
-                f.get("topic", ""), subject=f.get("course_code", ""), topic=f.get("topic", ""),
-            )
+            for f in DatabaseRepo.get_all_interactive_content():
+                blob = f"{f.get('front_text', '')} {f.get('back_text', '')}"
+                self._add_chunks_into(
+                    chunks, f["id"], f"{f.get('front_text', '')[:80]}", "flashcard", blob,
+                    f.get("topic", ""), subject=f.get("course_code", ""), topic=f.get("topic", ""),
+                )
 
-        total_tokens = sum(c.length for c in self.chunks)
-        self.avg_doc_len = (total_tokens / len(self.chunks)) if self.chunks else 50.0
+            doc_frequencies = {}
+            for c in chunks:
+                for t in set(c.tokens):
+                    doc_frequencies[t] = doc_frequencies.get(t, 0) + 1
+            total_tokens = sum(c.length for c in chunks)
 
-        for c in self.chunks:
-            for t in set(c.tokens):
-                self.doc_frequencies[t] = self.doc_frequencies.get(t, 0) + 1
+            self.chunks = chunks
+            self.topic_rows = topic_rows
+            self.doc_frequencies = doc_frequencies
+            self.avg_doc_len = (total_tokens / len(chunks)) if chunks else 50.0
 
-    def _add_chunks(self, doc_id, doc_name, doc_type, text, page_or_sec,
-                    subject="", topic="", difficulty="", marks=0):
+    @staticmethod
+    def _add_chunks_into(chunks, doc_id, doc_name, doc_type, text, page_or_sec,
+                         subject="", topic="", difficulty="", marks=0):
         if not text or len(text.strip()) < 10:
             return
         paragraphs = [p.strip() for p in text.split("\n\n") if len(p.strip()) > 30]
         if not paragraphs:
             paragraphs = [text.strip()]
         for i, p in enumerate(paragraphs):
-            chunk = RAGChunk(f"{doc_id}_{i}", doc_id, doc_name, doc_type, p, page_or_sec,
-                             subject=subject, topic=topic, difficulty=difficulty, marks=marks)
-            self.chunks.append(chunk)
+            chunks.append(RAGChunk(f"{doc_id}_{i}", doc_id, doc_name, doc_type, p, page_or_sec,
+                                   subject=subject, topic=topic, difficulty=difficulty, marks=marks))
 
     def _prefix_match(self, token: str) -> Optional[str]:
         """Resolve an abbreviation to a corpus term (prog -> programming).
@@ -185,7 +198,12 @@ class RAGIndex:
 
     def search(self, query, top_k=12):
         if not self.chunks:
-            self.rebuild_index()
+            # Cold index. Every thread that arrives before the first build
+            # finishes would otherwise each kick off their own rebuild; take the
+            # lock and re-check so exactly one build happens.
+            with self._build_lock:
+                if not self.chunks:
+                    self.rebuild_index()
         query_tokens = RAGChunk._tokenize(query)[:64]
         if not query_tokens:
             return []

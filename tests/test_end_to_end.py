@@ -356,6 +356,47 @@ class TestRAGIndex(unittest.TestCase):
             self.assertIn(key, ctx)
 
 
+class TestSearchEndpoint(unittest.TestCase):
+    def _client(self):
+        from fastapi.testclient import TestClient
+        from src.backend.app import app
+        return TestClient(app)
+
+    def test_search_endpoint_returns_results(self):
+        r = self._client().get("/api/search", params={"q": "avl tree rottaions"})
+        self.assertEqual(r.status_code, 200)
+        data = r.json()
+        self.assertEqual(data["query"], "avl tree rottaions")
+        self.assertGreater(data["total"], 0)
+        self.assertIn("results", data)
+        self.assertIn("topic_context", data)
+
+    def test_search_endpoint_rejects_empty_query(self):
+        r = self._client().get("/api/search", params={"q": "   "})
+        self.assertEqual(r.status_code, 400)
+
+    def test_search_endpoint_rejects_stopword_only_query(self):
+        r = self._client().get("/api/search", params={"q": "the of and"})
+        self.assertEqual(r.status_code, 400)
+
+    def test_search_endpoint_gibberish_is_200_with_empty_results(self):
+        r = self._client().get("/api/search", params={"q": "zxcvqw nonsense"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["total"], 0)
+
+    def test_search_endpoint_caps_limit(self):
+        # FastAPI validates limit=ge=1,le=50 itself, so an over-max request is a
+        # 422 rather than a silently clamped 200. That is the intended contract:
+        # reject a bad limit instead of quietly returning a different size.
+        r = self._client().get("/api/search", params={"q": "algorithm", "limit": 9999})
+        self.assertEqual(r.status_code, 422)
+
+    def test_search_endpoint_respects_limit(self):
+        r = self._client().get("/api/search", params={"q": "algorithm", "limit": 3})
+        self.assertEqual(r.status_code, 200)
+        self.assertLessEqual(len(r.json()["results"]), 3)
+
+
 class TestFrontendIntegrity(unittest.TestCase):
     def setUp(self):
         template_path = os.path.join(ROOT_DIR, "src", "static", "templates", "index.html")

@@ -17,7 +17,7 @@ if os.path.exists("C:/Users/dell/.env"):
 
 from .database import DatabaseRepo, init_db
 from .ai_engine import AIEngine
-from .rag_engine import RAGIndex
+from .rag_engine import RAGIndex, RAGChunk
 from .question_bank_api import router as question_bank_router
 from ..c_core.c_bridge import _lib_loaded
 
@@ -182,4 +182,31 @@ async def log_activity(data: Dict[str, Any] = Body(...)):
         duration=data.get("duration_seconds", 0),
         score=data.get("score", 0)
     )
+
+# ===== SEARCH API =====
+@app.get("/api/search")
+async def search_corpus(
+    q: str = Query(..., description="Raw study query"),
+    limit: int = Query(12, ge=1, le=50, description="Max results")
+):
+    """Keyword search across the question bank, syllabus units, and flashcards.
+
+    Deliberately offline: BM25 over a locally built index, with typo and
+    abbreviation tolerance. No LLM call, so it cannot fail on a missing API key
+    or a dropped network mid-demo.
+    """
+    query = q.strip()
+    if not query or not RAGChunk._tokenize(query):
+        raise HTTPException(
+            status_code=400,
+            detail="Type a topic, concept, or question keyword."
+        )
+    index = RAGIndex.get_instance()
+    results = index.search(query, top_k=limit)
+    return {
+        "query": query,
+        "total": len(results),
+        "results": results,
+        "topic_context": index.get_topic_context(query),
+    }
 
