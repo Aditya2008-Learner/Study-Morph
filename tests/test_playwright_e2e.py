@@ -41,6 +41,48 @@ class TestPlaywrightCourseE2E(unittest.TestCase):
         if cls.server:
             cls.server.should_exit = True
 
+    def test_study_desk_searches_real_corpus(self):
+        """The Study Desk must return real, query-specific results.
+
+        Guards against the previous behaviour, where generateStudyKit() sliced
+        the first 50 characters of the input and rendered hardcoded equations,
+        so every query produced identical output.
+        """
+        console_errors = []
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(viewport={"width": 1280, "height": 900})
+            page = context.new_page()
+            page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
+            page.on("pageerror", lambda e: console_errors.append(str(e)))
+
+            base_url = f"http://127.0.0.1:{self.port}"
+            page.goto(f"{base_url}/index.html", wait_until="networkidle")
+
+            def search(q):
+                page.fill("#lectureInput", q)
+                page.click(".btn-brand")
+                page.wait_for_timeout(2000)
+                return page.inner_text("#summaryContainer").strip()
+
+            first = search("avl tree rottaions")
+            self.assertIn("avl", first.lower(), f"typo query produced no AVL content: {first[:200]}")
+            self.assertNotIn("No matches", first, "typo query should still match")
+
+            second = search("dijkstra negative weights")
+            self.assertNotEqual(first, second,
+                                "two different queries returned identical output")
+            self.assertNotIn("No matches", second)
+
+            empty = search("zxcvqw nonsense")
+            self.assertIn("No matches", empty, "gibberish should show the empty state")
+            self.assertEqual(page.inner_text("#studyKitError").strip(), "",
+                             "an empty result set is not an error")
+
+            self.assertEqual(console_errors, [], f"console errors: {console_errors}")
+            browser.close()
+
     def test_full_course_question_refresh_flow(self):
         console_errors = []
 
