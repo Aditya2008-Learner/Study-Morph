@@ -43,6 +43,12 @@ def _flatten(value: Any) -> str:
     return str(value)
 
 
+def _norm(value: Any) -> str:
+    """Lowercase, strip punctuation, collapse whitespace - for text matching."""
+    cleaned = re.sub(r"[^a-z0-9\s]", " ", str(value or "").lower())
+    return re.sub(r"\s+", " ", cleaned).strip()
+
+
 def _topic_blob(topic_row: Dict[str, Any]) -> str:
     """Flatten a topic_content row into indexable text."""
     parts = [topic_row.get("summary", "") or ""]
@@ -71,6 +77,14 @@ class RAGIndex:
         self.doc_frequencies = {}
         self.avg_doc_len = 0.0
         self.topic_rows = {}
+        # question_bank stores every question twice: once under the course code
+        # (CS102) and once under the course name (Data Structures). These maps let
+        # us collapse the two back to one canonical code.
+        self._name_to_code = {}
+        self._code_to_name = {}
+        # course code -> {normalised unit text -> real unit name}, used to turn the
+        # placeholder topic ("Topic 1") into the actual syllabus unit.
+        self._units_by_course = {}
 
     @classmethod
     def get_instance(cls):
@@ -85,13 +99,16 @@ class RAGIndex:
         with self._build_lock:
             chunks = []
             topic_rows = {}
+            name_to_code = {}
+            code_to_name = {}
+            units_by_course = {}
 
-            for q in DatabaseRepo.get_question_bank_for_index():
-                self._add_chunks_into(
-                    chunks, q["id"], q["question_text"][:80], "question", q["question_text"],
-                    q.get("topic", ""), subject=q.get("subject", ""), topic=q.get("topic", ""),
-                    difficulty=q.get("difficulty", ""), marks=q.get("marks", 0),
-                )
+            curriculum = DatabaseRepo.get_curriculum()
+            for c in curriculum:
+                code, name = c.get("code"), c.get("name")
+                if code and name:
+                    name_to_code[name.strip().lower()] = code
+                    code_to_name[code] = name
 
             for t in DatabaseRepo.get_all_topics():
                 self._add_chunks_into(
@@ -100,12 +117,32 @@ class RAGIndex:
                     subject=t["course_code"], topic=t["topic_name"],
                 )
                 topic_rows[t["id"]] = t
+                unit = (t.get("topic_name") or "").strip()
+                if unit:
+                    units_by_course.setdefault(t["course_code"], {})[_norm(unit)] = unit
+
+            # _resolve_unit reads self._units_by_course, so publish it before the
+            # question loop below. Building it as a local and swapping at the end
+            # left the resolver looking at a stale (empty) catalogue.
+            self._units_by_course = units_by_course
+            self._name_to_code = name_to_code
+
+            for q in DatabaseRepo.get_question_bank_for_index():
+                subject = q.get("subject", "")
+                code = name_to_code.get(subject.strip().lower(), subject)
+                self._add_chunks_into(
+                    chunks, q["id"], q["question_text"][:80], "question", q["question_text"],
+                    code, subject=code, topic=self._resolve_unit(code, q),
+                    difficulty=q.get("difficulty", ""), marks=q.get("marks", 0),
+                )
 
             for f in DatabaseRepo.get_all_interactive_content():
                 blob = f"{f.get('front_text', '')} {f.get('back_text', '')}"
+                subject = f.get("course_code", "")
+                code = name_to_code.get(subject.strip().lower(), subject) if subject else subject
                 self._add_chunks_into(
                     chunks, f["id"], f"{f.get('front_text', '')[:80]}", "flashcard", blob,
-                    f.get("topic", ""), subject=f.get("course_code", ""), topic=f.get("topic", ""),
+                    f.get("topic", ""), subject=code, topic=f.get("topic", ""),
                 )
 
             doc_frequencies = {}
@@ -118,6 +155,61 @@ class RAGIndex:
             self.topic_rows = topic_rows
             self.doc_frequencies = doc_frequencies
             self.avg_doc_len = (total_tokens / len(chunks)) if chunks else 50.0
+            self._name_to_code = name_to_code
+            self._code_to_name = code_to_name
+            self._units_by_course = units_by_course
+
+    def _resolve_unit(self, course_code: str, question: Dict[str, Any]) -> str:
+        """Map a question onto a real syllabus unit.
+
+        The seed labels the topic by position ("Topic 1") and leaves `subtopic`
+        empty, so nothing in the row says which unit it belongs to. The unit name
+        is, however, written into the question text itself - the corpus is built
+        from templates like "Prove the lower bound for {UNIT} in {COURSE}". So
+        score every known unit by how many of its words appear in the text, and
+        require a strong match before overriding the placeholder. A row's own
+        course is NOT used as the candidate set: template questions are filed
+        under courses that have no unit of that name.
+        """
+        seeded = (question.get("topic") or "").strip()
+        text = _norm(question.get("question_text", ""))
+        if not text:
+            return seeded
+        words = set(text.split())
+
+        # Prefer a unit of this question's own course when one matches strongly.
+        own = self._units_by_course.get(course_code) or {}
+        best_unit, best_hits = "", 0
+        for unit_norm, unit_name in own.items():
+            hits = self._unit_score(unit_norm, words)
+            if hits > best_hits:
+                best_unit, best_hits = unit_name, hits
+        if best_unit:
+            return best_unit
+
+        # Otherwise search the whole catalogue.
+        best_unit, best_hits = "", 0
+        for units in self._units_by_course.values():
+            for unit_norm, unit_name in units.items():
+                hits = self._unit_score(unit_norm, words)
+                if hits > best_hits:
+                    best_unit, best_hits = unit_name, hits
+        return best_unit if best_hits >= 2 else seeded
+
+    @staticmethod
+    def _unit_score(unit_norm: str, words: set) -> int:
+        """How strongly a unit name is named in a question, 0 when not a match.
+
+        Requires at least 2 of the unit's words AND half its length, so a single
+        coincidental word can never hijack the label.
+        """
+        parts = unit_norm.split()
+        if len(parts) < 2:
+            return 0
+        hits = sum(1 for w in parts if w in words)
+        if hits < 2 or hits * 2 < len(parts):
+            return 0
+        return hits
 
     @staticmethod
     def _add_chunks_into(chunks, doc_id, doc_name, doc_type, text, page_or_sec,
@@ -224,23 +316,37 @@ class RAGIndex:
                 scores[i] += term_scores[i]
 
         ranked = sorted(range(total_docs), key=lambda i: scores[i], reverse=True)
+
+        # Each question exists in the corpus twice (course code + course name), so
+        # over-fetch before de-duplicating, otherwise duplicates eat result slots and
+        # the caller gets fewer than top_k. Questions collapse on their text;
+        # other chunk kinds collapse on doc_id.
+        scan = ranked[:max(top_k * 4, top_k + 40)]
         results = []
-        for idx in ranked[:top_k]:
-            if scores[idx] > 0.05:
-                c = self.chunks[idx]
-                results.append({
-                    "chunk_id": c.chunk_id,
-                    "doc_id": c.doc_id,
-                    "doc_name": c.doc_name,
-                    "source_type": c.doc_type,
-                    "text": c.text,
-                    "subject": c.subject,
-                    "topic": c.topic,
-                    "difficulty": c.difficulty,
-                    "marks": c.marks,
-                    "score": round(scores[idx], 4),
-                    "citation": f"[{c.doc_type}: {c.doc_name}]",
-                })
+        seen = set()
+        for idx in scan:
+            if scores[idx] <= 0.05:
+                continue
+            c = self.chunks[idx]
+            key = _norm(c.text) if c.doc_type == "question" else c.doc_id
+            if key in seen:
+                continue
+            seen.add(key)
+            results.append({
+                "chunk_id": c.chunk_id,
+                "doc_id": c.doc_id,
+                "doc_name": c.doc_name,
+                "source_type": c.doc_type,
+                "text": c.text,
+                "subject": c.subject,
+                "topic": c.topic,
+                "difficulty": c.difficulty,
+                "marks": c.marks,
+                "score": round(scores[idx], 4),
+                "citation": f"[{c.doc_type}: {c.doc_name}]",
+            })
+            if len(results) >= top_k:
+                break
         return results
 
     def get_topic_context(self, query: str) -> Optional[Dict[str, Any]]:

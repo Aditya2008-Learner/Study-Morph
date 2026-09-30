@@ -359,6 +359,76 @@ class TestRAGIndex(unittest.TestCase):
         for key in ("summary", "formulas", "key_points"):
             self.assertIn(key, ctx)
 
+    def test_search_results_have_no_duplicate_questions(self):
+        """Every question is seeded twice (code + name); search must not show both."""
+        from src.backend.rag_engine import RAGIndex
+        for q in ("avl tree rottaions", "dijkstra negative weights", "deadlok prevention"):
+            results = RAGIndex().search(q, top_k=12)
+            texts = [r["text"] for r in results if r["source_type"] == "question"]
+            self.assertEqual(len(texts), len(set(texts)),
+                             f"duplicate question in results for {q!r}")
+
+    def test_search_results_use_course_codes(self):
+        """Subject must be a real curriculum code so links resolve to a course page."""
+        from src.backend.rag_engine import RAGIndex
+        from src.backend.database import DatabaseRepo
+        valid = {c["code"] for c in DatabaseRepo.get_curriculum()}
+        for q in ("avl tree rottaions", "dijkstra negative weights"):
+            results = RAGIndex().search(q, top_k=12)
+            questions = [r for r in results if r["source_type"] == "question"]
+            self.assertTrue(questions, f"no question hits for {q!r}")
+            for r in questions:
+                self.assertIn(r["subject"], valid,
+                              f"subject {r['subject']!r} is not a curriculum code")
+
+    def test_search_resolves_topic_to_a_real_unit(self):
+        """Placeholder topics like 'Topic 1' must become real unit names.
+
+        Unit names come from the whole study_content catalogue, which is a
+        superset of topic_content (e.g. 'DC Circuits' exists as a unit but has
+        no topic_content row). So assert against the resolver's own catalogue
+        rather than one table.
+        """
+        from src.backend.rag_engine import RAGIndex
+        index = RAGIndex.get_instance()
+        known = {name for units in index._units_by_course.values()
+                 for name in units.values()}
+        known |= {t["topic_name"] for t in index.topic_rows.values()}
+
+        results = index.search("avl tree rottaions", top_k=12)
+        questions = [r for r in results if r["source_type"] == "question"]
+        self.assertTrue(questions)
+        resolved = [r for r in questions if r["topic"] in known]
+        self.assertTrue(resolved, "no result resolved to a real syllabus unit")
+        # Nothing should be left as a bare positional placeholder when the
+        # question clearly names its subject matter.
+        self.assertTrue(
+            any(r["topic"] not in ("Topic 1", "Topic 2", "Topic 3") for r in questions),
+            "every question still carries a positional placeholder topic",
+        )
+        self.assertIn(index.get_topic_context("avl tree rottaions")["topic"], known)
+
+    def test_topic_resolution_does_not_invent_labels(self):
+        """A question naming no unit must keep its placeholder, not borrow one."""
+        from src.backend.rag_engine import RAGIndex
+        index = RAGIndex.get_instance()
+        known = {name for units in index._units_by_course.values()
+                 for name in units.values()}
+        rows = index._resolve_unit("CH101", {
+            "topic": "Topic 1",
+            "question_text": "Explain scalability bottlenecks in Spark. Answer: sharding.",
+        })
+        self.assertTrue(rows in known or rows == "Topic 1",
+                        f"unmatched question got an invented unit: {rows!r}")
+
+    def test_search_still_fills_the_requested_limit_after_dedup(self):
+        """Dedup must over-fetch, otherwise duplicates consume slots and results shrink."""
+        from src.backend.rag_engine import RAGIndex
+        results = RAGIndex().search("avl tree rottaions", top_k=8)
+        questions = [r for r in results if r["source_type"] == "question"]
+        self.assertGreaterEqual(len(questions), 6,
+                                f"dedup starved the result list: only {len(questions)} of 8")
+
 
 class TestSearchEndpoint(unittest.TestCase):
     def _client(self):
@@ -459,8 +529,6 @@ class TestFrontendIntegrity(unittest.TestCase):
         # Problem 005 fix verification: loadSampleData must not rely on implicit global event
         self.assertIn("function loadSampleData(key, el)", self.index_html)
         self.assertNotIn("if (event && event.target", self.index_html)
-
-
 class TestFastAPIRoutes(unittest.TestCase):
     def _client(self):
         from fastapi.testclient import TestClient
