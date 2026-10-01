@@ -2,7 +2,6 @@ import os
 import sys
 import platform
 import ctypes
-from PIL import Image
 
 _lib = None
 _lib_loaded = False
@@ -136,6 +135,10 @@ def fast_hash_string(s):
     return h
 
 def preprocess_image_for_ocr(image):
+    # Pillow is imported lazily: its only consumer was the notebook-OCR upload
+    # path, which this cleanup removed. A module-level import would make the
+    # whole native bridge depend on a package the search path never touches.
+    from PIL import Image  # noqa: F401
     if image.mode != "L":
         return image.convert("L")
     return image

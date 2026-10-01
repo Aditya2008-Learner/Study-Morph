@@ -475,6 +475,43 @@ class _OldFrontendIntegrityPlaceholder(unittest.TestCase):
     pass
 
 
+class TestStatusShape(unittest.TestCase):
+    def test_status_keeps_all_keys(self):
+        from fastapi.testclient import TestClient
+        from src.backend.app import app
+        data = TestClient(app).get("/api/system/status").json()
+        for key in ("status", "c_core_accelerated", "gemini_api_configured",
+                    "total_assignments", "total_notebooks", "indexed_rag_chunks",
+                    "available_colleges", "available_subjects", "timestamp"):
+            self.assertIn(key, data, f"status key removed: {key}")
+        self.assertEqual(data["status"], "online")
+
+    def test_dropped_dependencies_are_not_imported(self):
+        """pypdf, python-docx and numpy went away with the OCR upload path."""
+        import ast
+        import pathlib
+        banned = ("pypdf", "docx", "numpy")
+        for f in (pathlib.Path(ROOT_DIR) / "src").rglob("*.py"):
+            tree = ast.parse(f.read_text(encoding="utf-8", errors="ignore"))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for a in node.names:
+                        self.assertNotIn(a.name.split(".")[0], banned,
+                                         f"{f.name} imports {a.name}")
+                elif isinstance(node, ast.ImportFrom) and node.module:
+                    self.assertNotIn(node.module.split(".")[0], banned,
+                                     f"{f.name} imports from {node.module}")
+
+    def test_requirements_drop_ocr_only_packages(self):
+        with open(os.path.join(ROOT_DIR, "requirements.txt"), encoding="utf-8") as fh:
+            text = fh.read()
+        for gone in ("pypdf", "python-docx", "numpy"):
+            self.assertNotIn(gone, text, f"requirements.txt still lists {gone}")
+        self.assertIn("fastapi", text)
+        # Pillow stays: c_bridge still imports it for the image helpers.
+        self.assertIn("Pillow", text)
+
+
 class TestFrontendIntegrity(unittest.TestCase):
     def setUp(self):
         template_path = os.path.join(ROOT_DIR, "src", "static", "templates", "index.html")
