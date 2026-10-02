@@ -17,3 +17,6 @@ node_modules/
 # Unrelated promo-video assets (~7MB of media); not referenced by the app
 brag-output/
 
+# Local audit/benchmark output (machine-specific timings)
+.audit/
+

@@ -566,6 +566,80 @@ class TestFrontendIntegrity(unittest.TestCase):
         # Problem 005 fix verification: loadSampleData must not rely on implicit global event
         self.assertIn("function loadSampleData(key, el)", self.index_html)
         self.assertNotIn("if (event && event.target", self.index_html)
+
+
+class TestBackendContractInventory(unittest.TestCase):
+    """Freeze the public route surface.
+
+    This is the mechanical guard for the plan's "do not remove features" rule:
+    every method/path pair that exists today must still exist after the audit.
+    """
+
+    EXPECTED_ROUTES = frozenset({
+        ("GET", "/"),
+        ("GET", "/index.html"),
+        ("GET", "/course.html"),
+        ("GET", "/course"),
+        ("GET", "/api/system/status"),
+        ("GET", "/api/metadata"),
+        ("GET", "/api/curriculum"),
+        ("GET", "/api/curriculum/full"),
+        ("GET", "/api/curriculum/year/{year}"),
+        ("GET", "/api/curriculum/{code}"),
+        ("GET", "/api/topics"),
+        ("GET", "/api/topics/search"),
+        ("GET", "/api/content/{course_code}"),
+        ("GET", "/api/content/{course_code}/{topic_name}"),
+        ("GET", "/api/interactive/{course_code}"),
+        ("POST", "/api/activity/log"),
+        ("GET", "/api/search"),
+        ("GET", "/api/questions/topics"),
+        ("GET", "/api/questions/course/{course_code}"),
+        ("POST", "/api/questions/course/{course_code}/refresh"),
+        ("POST", "/api/questions/refresh"),
+        ("GET", "/api/questions/topic/{subject}/{topic}"),
+        ("GET", "/api/questions/topic-stats/{subject}/{topic}"),
+    })
+
+    # FastAPI mounts these framework docs automatically; they are not part of the
+    # application's own surface, so they are excluded from the frozen inventory.
+    FRAMEWORK_PATHS = frozenset({
+        "/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect",
+    })
+
+    def _actual_routes(self):
+        from src.backend.app import app
+
+        found = set()
+        for route in app.routes:
+            path = getattr(route, "path", None)
+            methods = getattr(route, "methods", None)
+            if path and methods and path not in self.FRAMEWORK_PATHS:
+                for method in methods:
+                    found.add((method, path))
+            # Routes from an included router appear as a wrapper object rather
+            # than as plain APIRoute entries, so read them off the router it wraps.
+            router = getattr(route, "original_router", None)
+            if router is not None:
+                for child in getattr(router, "routes", []) or []:
+                    child_path = getattr(child, "path", None)
+                    if child_path:
+                        for method in child.methods or set():
+                            found.add((method, child_path))
+        return found
+
+    def test_route_surface_matches_frozen_inventory(self):
+        actual = self._actual_routes()
+        missing = self.EXPECTED_ROUTES - actual
+        added = actual - self.EXPECTED_ROUTES
+        self.assertFalse(
+            missing, "routes removed by the audit: " + ", ".join(
+                f"{m} {p}" for m, p in sorted(missing)))
+        self.assertFalse(
+            added, "unexpected new routes: " + ", ".join(
+                f"{m} {p}" for m, p in sorted(added)))
+
+
 class TestFastAPIRoutes(unittest.TestCase):
     def _client(self):
         from fastapi.testclient import TestClient
