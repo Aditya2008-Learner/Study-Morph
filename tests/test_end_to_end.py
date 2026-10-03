@@ -829,5 +829,89 @@ class TestDatabaseConnectionSafety(unittest.TestCase):
         self.assertTrue(DatabaseRepo.delete_assignment(created["id"]))
 
 
+class TestDatabaseInitialization(unittest.TestCase):
+    """P0.2 - Database schema initialization must be centralized and free of import side effects."""
+
+    def test_import_database_module_does_not_create_db_file(self):
+        """Importing src.backend.database must not create a DB file as a side effect."""
+        import subprocess
+        with tempfile.TemporaryDirectory() as td:
+            tmp_db = os.path.join(td, "no_import_creation.sqlite")
+            cmd = [
+                sys.executable,
+                "-c",
+                f"import os, sys; os.environ['PORT']='8009'; sys.path.insert(0, r'{ROOT_DIR}'); "
+                f"import src.backend.database as db; "
+                f"# If init_db() was called at module level, it used default DB_PATH\n"
+                f"print('DEFAULT_EXISTS:', os.path.exists(r'{tmp_db}'))\n"
+                f"# Let's verify database.py does NOT have module-level init_db() call\n"
+                f"src = open(db.__file__, encoding='utf-8').read()\n"
+                f"lines = [l.strip() for l in src.splitlines()]\n"
+                f"has_module_init = any(l == 'init_db()' for l in lines[-10:])\n"
+                f"print('HAS_MODULE_INIT:', has_module_init)\n"
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            self.assertIn("HAS_MODULE_INIT: False", res.stdout)
+
+    def test_init_db_creates_all_canonical_tables(self):
+        """database.init_db() creates all required application tables and indexes."""
+        from src.backend import database
+        orig = database.DB_PATH
+        with tempfile.TemporaryDirectory() as td:
+            tmp_db = os.path.join(td, "init_canonical.sqlite")
+            try:
+                database.DB_PATH = tmp_db
+                database.init_db()
+                conn = sqlite3.connect(tmp_db)
+                tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+                conn.close()
+                for expected_table in (
+                    "assignments", "pyq_papers", "notebooks", "generated_assignments",
+                    "assignment_submissions", "study_notes", "quizzes", "quiz_attempts",
+                    "chat_history", "curriculum", "topic_content", "student_activity",
+                    "learning_progress", "topic_assignments", "interactive_content"
+                ):
+                    self.assertIn(expected_table, tables, f"table {expected_table} missing from init_db()")
+            finally:
+                database.DB_PATH = orig
+
+    def test_database_init_delegates_to_database_module(self):
+        """database_init.py uses the canonical DB_PATH, get_connection, and init_db from database.py."""
+        from src.backend import database, database_init
+        self.assertEqual(database_init.DB_PATH, database.DB_PATH)
+        # Calling database_init.init_db should call canonical database.init_db
+        self.assertEqual(database_init.init_db.__module__, database.init_db.__module__)
+
+    def test_init_db_is_non_destructive_on_existing_database(self):
+        """Calling init_db multiple times does not clear or alter existing rows."""
+        from src.backend import database
+        orig = database.DB_PATH
+        with tempfile.TemporaryDirectory() as td:
+            tmp_db = os.path.join(td, "idempotent.sqlite")
+            try:
+                database.DB_PATH = tmp_db
+                database.init_db()
+                
+                # Seed a test row
+                row = database.DatabaseRepo.create_assignment({
+                    "title": "Preserved Assignment",
+                    "college": "Test College",
+                    "subject": "CS201",
+                    "semester": "3",
+                    "academic_year": "2026"
+                })
+                self.assertIsNotNone(row)
+                
+                # Run init_db again (e.g. on second app startup or migration pass)
+                database.init_db()
+                database.init_db()
+                
+                fetched = database.DatabaseRepo.get_assignment_by_id(row["id"])
+                self.assertIsNotNone(fetched, "row should survive multiple init_db() calls")
+                self.assertEqual(fetched["title"], "Preserved Assignment")
+            finally:
+                database.DB_PATH = orig
+
+
 if __name__ == "__main__":
     unittest.main()

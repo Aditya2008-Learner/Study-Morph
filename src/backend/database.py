@@ -1268,5 +1268,3 @@ class DatabaseRepo:
                 "next_to_study": unstudied,
                 "suggested_review": review_topics
             }
-
-init_db()
