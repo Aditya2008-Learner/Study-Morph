@@ -2,6 +2,8 @@ import os
 import sys
 import json
 import re
+import sqlite3
+import tempfile
 import unittest
 import asyncio
 
@@ -676,6 +678,155 @@ class TestFastAPIRoutes(unittest.TestCase):
         body = res.json()
         self.assertEqual(body.get("total"), 15)
         self.assertEqual(len(body.get("questions", [])), 15)
+
+
+class _RaisingCursor:
+    """Cursor proxy that raises on execute() and delegates everything else."""
+
+    def __init__(self, real_cursor):
+        self._real = real_cursor
+
+    def execute(self, *args, **kwargs):
+        raise RuntimeError("probe: injected execute failure")
+
+    def __getattr__(self, name):
+        return getattr(self._real, name)
+
+
+class _RaisingConnection:
+    """Connection proxy that hands out a failing cursor but is otherwise real."""
+
+    def __init__(self, real_conn):
+        self._real = real_conn
+        self.closed = False
+
+    def cursor(self, *args, **kwargs):
+        return _RaisingCursor(self._real.cursor(*args, **kwargs))
+
+    def commit(self):
+        return self._real.commit()
+
+    def close(self):
+        self.closed = True
+        return self._real.close()
+
+    def __getattr__(self, name):
+        return getattr(self._real, name)
+
+
+class TestDatabaseConnectionSafety(unittest.TestCase):
+    """P0.1 - repository connections must close on every exit path."""
+
+    def setUp(self):
+        from src.backend import database
+        self._database = database
+        self._original_db_path = database.DB_PATH
+        self._tmpdir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+        database.DB_PATH = os.path.join(self._tmpdir.name, "audit.sqlite")
+        database.init_db()
+
+    def tearDown(self):
+        self._database.DB_PATH = self._original_db_path
+        self._tmpdir.cleanup()
+
+    def _run_with_failing_cursor(self, call):
+        """Run `call` with a connection whose execute() raises."""
+        from unittest.mock import patch
+        real_conns = []
+        proxies = []
+        original_factory = self._database.get_connection
+
+        def factory():
+            real = original_factory()
+            proxy = _RaisingConnection(real)
+            real_conns.append(real)
+            proxies.append(proxy)
+            return proxy
+
+        with patch.object(self._database, "get_connection", factory):
+            try:
+                call()
+                return None, real_conns, proxies
+            except Exception as exc:  # noqa: BLE001
+                return exc, real_conns, proxies
+
+    def test_connection_is_closed_when_query_raises(self):
+        exc, real_conns, proxies = self._run_with_failing_cursor(
+            lambda: DatabaseRepo.get_curriculum()
+        )
+
+        self.assertIsInstance(exc, RuntimeError, "failure must propagate, not be swallowed")
+        self.assertEqual(str(exc), "probe: injected execute failure")
+        self.assertEqual(len(real_conns), 1, "expected exactly one connection attempt")
+        self.assertTrue(
+            proxies[0].closed,
+            "connection was not closed on the exception path",
+        )
+
+    def test_closed_connection_cannot_be_reused(self):
+        """A leaked connection stays usable; a properly closed one must not."""
+        _, real_conns, proxies = self._run_with_failing_cursor(
+            lambda: DatabaseRepo.get_assignments()
+        )
+        self.assertTrue(proxies[0].closed, "connection should have been closed")
+
+        with self.assertRaises(sqlite3.ProgrammingError):
+            real_conns[0].execute("SELECT 1")
+
+    def test_repository_works_again_after_a_failure(self):
+        """A failed call must not poison later database work."""
+        self._run_with_failing_cursor(lambda: DatabaseRepo.get_curriculum())
+        rows = DatabaseRepo.get_curriculum()
+        self.assertIsInstance(rows, list)
+        self.assertEqual(rows, [], "temp database starts with no curriculum rows")
+
+    def test_missing_row_returns_none_and_still_closes(self):
+        """Early-return paths must release the connection too."""
+        from unittest.mock import patch
+        real_conns = []
+        proxies = []
+        original_factory = self._database.get_connection
+
+        def factory():
+            real = original_factory()
+            proxy = _RaisingConnection(real)
+
+            class _NullCursor:
+                def execute(self, *a, **k):
+                    return real.cursor().execute(*a, **k)
+
+                def __getattr__(self, name):
+                    return getattr(real.cursor(), name)
+
+            proxy.cursor = lambda *a, **k: _NullCursor()
+            real_conns.append(real)
+            proxies.append(proxy)
+            return proxy
+
+        with patch.object(self._database, "get_connection", factory):
+            result = DatabaseRepo.get_assignment_by_id("does-not-exist")
+
+        self.assertIsNone(result, "missing id must return None")
+        self.assertTrue(proxies[0].closed, "early-return path leaked the connection")
+
+    def test_write_then_read_round_trip(self):
+        created = DatabaseRepo.create_assignment({
+            "title": "Audit Probe Assignment",
+            "college": "Test University",
+            "subject": "CS201",
+            "semester": "3",
+            "academic_year": "2026",
+        })
+        self.assertIsNotNone(created)
+        self.assertEqual(created["title"], "Audit Probe Assignment")
+        self.assertEqual(created["subject"], "CS201")
+
+        fetched = DatabaseRepo.get_assignment_by_id(created["id"])
+        self.assertIsNotNone(fetched)
+        self.assertEqual(fetched["title"], "Audit Probe Assignment")
+        self.assertEqual(fetched["questions"], [])
+
+        self.assertTrue(DatabaseRepo.delete_assignment(created["id"]))
 
 
 if __name__ == "__main__":
