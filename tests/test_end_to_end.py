@@ -1004,5 +1004,50 @@ class TestQuestionGenerationConcurrency(unittest.TestCase):
         self.assertEqual(len(data.get("questions", [])), 15)
 
 
+class TestProviderFallbacks(unittest.TestCase):
+    """P2.1 - Optional external services must fall back gracefully with safe, redacted logging."""
+
+    def test_wikipedia_failure_falls_back_to_exact_15(self):
+        from unittest.mock import patch
+        import requests
+        from src.backend.web_question_engine import WebQuestionEngine
+        
+        with patch.object(requests, "get", side_effect=requests.RequestException("simulated network error")):
+            res = WebQuestionEngine.generate_questions("CS201", session_id=f"fb_wiki_{time.time_ns()}")
+            self.assertEqual(res["total"], 15)
+            self.assertEqual(len(res["questions"]), 15)
+            for q in res["questions"]:
+                self.assertIn("question_text", q)
+                self.assertIn("difficulty", q)
+
+    def test_gemini_failure_or_malformed_json_falls_back_to_exact_15(self):
+        from unittest.mock import patch
+        from src.backend.ai_engine import AIEngine
+        from src.backend.web_question_engine import WebQuestionEngine
+
+        with patch.object(AIEngine, "is_gemini_available", return_value=True), \
+             patch.object(AIEngine, "_call_gemini_llm", return_value="INVALID JSON NOT A LIST"):
+            res = WebQuestionEngine.generate_questions("CS201", session_id=f"fb_llm_{time.time_ns()}")
+            self.assertEqual(res["total"], 15)
+            self.assertEqual(len(res["questions"]), 15)
+
+    def test_secret_redaction_in_ai_engine_logs(self):
+        """API keys or sensitive tokens must not be emitted to stdout/logs."""
+        import io
+        import contextlib
+        from unittest.mock import patch
+        from src.backend.ai_engine import AIEngine
+
+        secret = "SECRET_KEY_PROBE_99999"
+        stdout_capture = io.StringIO()
+        with patch.dict(os.environ, {"GEMINI_API_KEY": secret}), \
+             contextlib.redirect_stdout(stdout_capture), \
+             patch("google.generativeai.GenerativeModel", side_effect=Exception(f"Error containing {secret}")):
+            res = AIEngine._call_gemini_llm("test prompt")
+            self.assertIsNone(res)
+            captured = stdout_capture.getvalue()
+            self.assertNotIn(secret, captured, "Secret API key was leaked in logs/stdout")
+
+
 if __name__ == "__main__":
     unittest.main()

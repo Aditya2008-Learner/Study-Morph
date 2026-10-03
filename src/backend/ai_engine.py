@@ -1,8 +1,11 @@
 import os
 import re
+import logging
 from typing import List, Dict, Any, Optional
 
 from .rag_engine import RAGIndex
+
+logger = logging.getLogger(__name__)
 
 class AIEngine:
     @staticmethod
@@ -23,7 +26,7 @@ class AIEngine:
             if response and response.text:
                 return response.text.strip()
         except Exception as e:
-            print(f"Gemini API fallback: {e}")
+            logger.warning("Gemini API call failed (%s); falling back to local synthesis.", type(e).__name__)
         return None
 
     @staticmethod

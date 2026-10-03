@@ -6,6 +6,7 @@ import time
 import random
 import hashlib
 import threading
+import logging
 from typing import List, Dict, Any, Optional, Set, Tuple
 from collections import defaultdict
 import requests
@@ -14,6 +15,8 @@ from bs4 import BeautifulSoup
 from .ai_engine import AIEngine
 from ..c_core.c_bridge import fast_fuzzy_similarity, fast_levenshtein
 from .curriculum import get_course_by_code
+
+logger = logging.getLogger(__name__)
 
 # HTTP headers for web research
 SEARCH_HEADERS = {
@@ -111,8 +114,10 @@ class WebQuestionEngine:
                             if ext_text:
                                 extracts.append(f"[{pdata.get('title')}]: {ext_text}")
                                 sources.append(f"https://en.wikipedia.org/wiki/{requests.utils.quote(pdata.get('title', ''))}")
+        except requests.RequestException as e:
+            logger.warning("Wikipedia research query failed (%s); continuing with fallback.", type(e).__name__)
         except Exception as e:
-            pass
+            logger.warning("Wikipedia response parsing failed (%s); continuing with fallback.", type(e).__name__)
 
         # 2. DuckDuckGo / Public Search Fallback
         if len(snippets) < 3:
@@ -125,8 +130,10 @@ class WebQuestionEngine:
                         snip = td.get_text(strip=True)
                         if snip:
                             snippets.append(snip)
-            except Exception:
-                pass
+            except requests.RequestException as e:
+                logger.warning("DuckDuckGo research query failed (%s); continuing with fallback.", type(e).__name__)
+            except Exception as e:
+                logger.warning("DuckDuckGo response parsing failed (%s); continuing with fallback.", type(e).__name__)
 
         # 3. Google Custom Search (if GOOGLE_SEARCH_API_KEY and GOOGLE_CSE_ID are provided)
         google_api_key = os.environ.get("GOOGLE_SEARCH_API_KEY") or os.environ.get("GOOGLE_API_KEY")
@@ -141,8 +148,10 @@ class WebQuestionEngine:
                         titles.append(item.get("title", ""))
                         snippets.append(item.get("snippet", ""))
                         sources.append(item.get("link", ""))
-            except Exception:
-                pass
+            except requests.RequestException as e:
+                logger.warning("Google Custom Search failed (%s); continuing with fallback.", type(e).__name__)
+            except Exception as e:
+                logger.warning("Google Custom Search parsing failed (%s); continuing with fallback.", type(e).__name__)
 
         combined_research_text = "\n\n".join(extracts + snippets)
         if not combined_research_text:
@@ -307,8 +316,10 @@ Return strictly a valid JSON array of 15 question objects:
                                 "status": "Approved"
                             })
                     return valid
+        except (ValueError, json.JSONDecodeError, KeyError) as e:
+            logger.warning("Gemini response parsing failed (%s); falling back to synthesis.", type(e).__name__)
         except Exception as e:
-            pass
+            logger.warning("Gemini question generation failed (%s); falling back to synthesis.", type(e).__name__)
 
         return []
 
