@@ -1049,5 +1049,29 @@ class TestProviderFallbacks(unittest.TestCase):
             self.assertNotIn(secret, captured, "Secret API key was leaked in logs/stdout")
 
 
+class TestJSONDecodingHelper(unittest.TestCase):
+    """P2.2 - Shared JSON field decoder helper tests."""
+
+    def test_decode_row_json_handles_null_empty_and_valid(self):
+        from src.backend.database import _decode_row_json
+        
+        # Simulated row dicts
+        row = {
+            "id": "1",
+            "name": "Math",
+            "modules": '["M1", "M2"]',
+            "outcomes": None,
+            "assignments": "",
+            "broken": "{invalid json"
+        }
+        decoded = _decode_row_json(row, ["modules", "outcomes", "assignments", "broken"])
+        self.assertEqual(decoded["modules"], ["M1", "M2"])
+        self.assertEqual(decoded["outcomes"], [])
+        self.assertEqual(decoded["assignments"], [])
+        self.assertEqual(decoded["broken"], [])
+        self.assertEqual(decoded["id"], "1")
+        self.assertEqual(decoded["name"], "Math")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -34,6 +34,26 @@ def _connection() -> Iterator[sqlite3.Connection]:
 # Alias for backwards compatibility
 connection = _connection
 
+def _decode_row_json(row: Optional[Any], fields: List[str]) -> Optional[Dict[str, Any]]:
+    """Convert an sqlite3.Row to dict, safely decoding JSON string fields into lists/dicts."""
+    if not row:
+        return None
+    d = dict(row)
+    for f in fields:
+        val = d.get(f)
+        if val:
+            try:
+                d[f] = json.loads(val)
+            except Exception:
+                d[f] = []
+        else:
+            d[f] = []
+    return d
+
+def _decode_rows_json(rows: List[Any], fields: List[str]) -> List[Dict[str, Any]]:
+    """Convert a list of sqlite3.Rows to dicts, safely decoding JSON string fields."""
+    return [_decode_row_json(r, fields) for r in rows if r]
+
 def init_db():
     conn = get_connection()
     cursor = conn.cursor()
@@ -352,28 +372,14 @@ class DatabaseRepo:
             query += f" ORDER BY {sort_col} {order} LIMIT ? OFFSET ?"
             params.extend([limit, offset])
             cursor.execute(query, params)
-            rows = cursor.fetchall()
-            result = []
-            for r in rows:
-                d = dict(r)
-                d["topic_tags"] = json.loads(d["topic_tags"]) if d["topic_tags"] else []
-                d["questions"] = json.loads(d["questions"]) if d["questions"] else []
-                d["attachments"] = json.loads(d["attachments"]) if d["attachments"] else []
-                result.append(d)
-            return result
+            return _decode_rows_json(cursor.fetchall(), ["topic_tags", "questions", "attachments"])
 
     @staticmethod
     def get_assignment_by_id(assignment_id: str) -> Optional[Dict[str, Any]]:
         with _connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM assignments WHERE id = ?", (assignment_id,))
-            row = cursor.fetchone()
-            if not row: return None
-            d = dict(row)
-            d["topic_tags"] = json.loads(d["topic_tags"]) if d["topic_tags"] else []
-            d["questions"] = json.loads(d["questions"]) if d["questions"] else []
-            d["attachments"] = json.loads(d["attachments"]) if d["attachments"] else []
-            return d
+            return _decode_row_json(cursor.fetchone(), ["topic_tags", "questions", "attachments"])
 
     @staticmethod
     def create_assignment(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -470,15 +476,9 @@ class DatabaseRepo:
             if search:
                 query += " AND (LOWER(title) LIKE LOWER(?) OR LOWER(content_text) LIKE LOWER(?))"
                 params.extend([f"%{search}%", f"%{search}%"])
-            query += " ORDER BY downloaded_at DESC"
-            cursor.execute(query, params)
-            rows = cursor.fetchall()
-            result = []
-            for r in rows:
-                d = dict(r)
-                d["parsed_questions"] = json.loads(d["parsed_questions"]) if d["parsed_questions"] else []
-                result.append(d)
-            return result
+        query += " ORDER BY downloaded_at DESC"
+        cursor.execute(query, params)
+        return _decode_rows_json(cursor.fetchall(), ["parsed_questions"])
 
     @staticmethod
     def create_pyq_paper(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -545,28 +545,14 @@ class DatabaseRepo:
         with _connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM notebooks ORDER BY uploaded_at DESC")
-            rows = cursor.fetchall()
-            result = []
-            for r in rows:
-                d = dict(r)
-                d["extracted_topics"] = json.loads(d["extracted_topics"]) if d["extracted_topics"] else []
-                d["formulas"] = json.loads(d["formulas"]) if d["formulas"] else []
-                d["key_points"] = json.loads(d["key_points"]) if d["key_points"] else []
-                result.append(d)
-            return result
+            return _decode_rows_json(cursor.fetchall(), ["extracted_topics", "formulas", "key_points"])
 
     @staticmethod
     def get_notebook_by_id(notebook_id: str) -> Optional[Dict[str, Any]]:
         with _connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM notebooks WHERE id = ?", (notebook_id,))
-            row = cursor.fetchone()
-            if not row: return None
-            d = dict(row)
-            d["extracted_topics"] = json.loads(d["extracted_topics"]) if d["extracted_topics"] else []
-            d["formulas"] = json.loads(d["formulas"]) if d["formulas"] else []
-            d["key_points"] = json.loads(d["key_points"]) if d["key_points"] else []
-            return d
+            return _decode_row_json(cursor.fetchone(), ["extracted_topics", "formulas", "key_points"])
 
     @staticmethod
     def get_distinct_metadata() -> Dict[str, List[str]]:
@@ -605,46 +591,21 @@ class DatabaseRepo:
         with _connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM curriculum ORDER BY semester, code")
-            rows = cursor.fetchall()
-            result = []
-            for r in rows:
-                d = dict(r)
-                d["modules"] = json.loads(d["modules"]) if d["modules"] else []
-                d["outcomes"] = json.loads(d["outcomes"]) if d["outcomes"] else []
-                d["key_textbooks"] = json.loads(d["key_textbooks"]) if d["key_textbooks"] else []
-                d["assignments"] = json.loads(d["assignments"]) if d["assignments"] else []
-                result.append(d)
-            return result
+            return _decode_rows_json(cursor.fetchall(), ["modules", "outcomes", "key_textbooks", "assignments"])
 
     @staticmethod
     def get_curriculum_by_semester(semester: int) -> List[Dict[str, Any]]:
         with _connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM curriculum WHERE semester = ? ORDER BY code", (str(semester),))
-            rows = cursor.fetchall()
-            result = []
-            for r in rows:
-                d = dict(r)
-                d["modules"] = json.loads(d["modules"]) if d["modules"] else []
-                d["outcomes"] = json.loads(d["outcomes"]) if d["outcomes"] else []
-                d["key_textbooks"] = json.loads(d["key_textbooks"]) if d["key_textbooks"] else []
-                d["assignments"] = json.loads(d["assignments"]) if d["assignments"] else []
-                result.append(d)
-            return result
+            return _decode_rows_json(cursor.fetchall(), ["modules", "outcomes", "key_textbooks", "assignments"])
 
     @staticmethod
     def get_curriculum_by_code(code: str) -> Optional[Dict[str, Any]]:
         with _connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM curriculum WHERE UPPER(code) = UPPER(?)", (code,))
-            row = cursor.fetchone()
-            if not row: return None
-            d = dict(row)
-            d["modules"] = json.loads(d["modules"]) if d["modules"] else []
-            d["outcomes"] = json.loads(d["outcomes"]) if d["outcomes"] else []
-            d["key_textbooks"] = json.loads(d["key_textbooks"]) if d["key_textbooks"] else []
-            d["assignments"] = json.loads(d["assignments"]) if d["assignments"] else []
-            return d
+            return _decode_row_json(cursor.fetchone(), ["modules", "outcomes", "key_textbooks", "assignments"])
 
     @staticmethod
     def create_generated_assignment(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -997,19 +958,7 @@ class DatabaseRepo:
                               (course_code, topic_name))
             else:
                 cursor.execute("SELECT * FROM topic_content WHERE course_code = ?", (course_code,))
-            rows = cursor.fetchall()
-            result = []
-            for r in rows:
-                d = dict(r)
-                d["key_points"] = json.loads(d["key_points"]) if d["key_points"] else []
-                d["formulas"] = json.loads(d["formulas"]) if d["formulas"] else []
-                d["examples"] = json.loads(d["examples"]) if d["examples"] else []
-                d["mcqs"] = json.loads(d["mcqs"]) if d["mcqs"] else []
-                d["practice_questions"] = json.loads(d["practice_questions"]) if d["practice_questions"] else []
-                d["flashcards"] = json.loads(d["flashcards"]) if d["flashcards"] else []
-                d["viva_questions"] = json.loads(d["viva_questions"]) if d["viva_questions"] else []
-                result.append(d)
-            return result
+            return _decode_rows_json(cursor.fetchall(), ["key_points", "formulas", "examples", "mcqs", "practice_questions", "flashcards", "viva_questions"])
     
     @staticmethod
     def get_all_topics() -> List[Dict[str, Any]]:
@@ -1017,16 +966,7 @@ class DatabaseRepo:
         with _connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM topic_content ORDER BY course_code, topic_name")
-            rows = cursor.fetchall()
-            result = []
-            for r in rows:
-                d = dict(r)
-                d["key_points"] = json.loads(d["key_points"]) if d["key_points"] else []
-                d["formulas"] = json.loads(d["formulas"]) if d["formulas"] else []
-                d["mcqs"] = json.loads(d["mcqs"]) if d["mcqs"] else []
-                d["flashcards"] = json.loads(d["flashcards"]) if d["flashcards"] else []
-                result.append(d)
-            return result
+            return _decode_rows_json(cursor.fetchall(), ["key_points", "formulas", "mcqs", "flashcards"])
     
     @staticmethod
     def get_topic_by_keyword(keyword: str) -> List[Dict[str, Any]]:
@@ -1035,14 +975,7 @@ class DatabaseRepo:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM topic_content WHERE topic_name LIKE ? OR summary LIKE ?", 
                           (f'%{keyword}%', f'%{keyword}%'))
-            rows = cursor.fetchall()
-            result = []
-            for r in rows:
-                d = dict(r)
-                d["key_points"] = json.loads(d["key_points"]) if d["key_points"] else []
-                d["formulas"] = json.loads(d["formulas"]) if d["formulas"] else []
-                result.append(d)
-            return result
+            return _decode_rows_json(cursor.fetchall(), ["key_points", "formulas"])
 
     @staticmethod
     def get_interactive_content(course_code: str) -> List[Dict[str, Any]]:
