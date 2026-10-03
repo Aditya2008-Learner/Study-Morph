@@ -22,6 +22,9 @@ class RAGChunk:
         self.marks = marks
         self.tokens = self._tokenize(text)
         self.length = len(self.tokens)
+        self.term_counts = {}
+        for t in self.tokens:
+            self.term_counts[t] = self.term_counts.get(t, 0) + 1
 
     @staticmethod
     def _tokenize(text):
@@ -85,6 +88,7 @@ class RAGIndex:
         # course code -> {normalised unit text -> real unit name}, used to turn the
         # placeholder topic ("Topic 1") into the actual syllabus unit.
         self._units_by_course = {}
+        self._prefix_cache = {}
 
     @classmethod
     def get_instance(cls):
@@ -151,6 +155,17 @@ class RAGIndex:
                     doc_frequencies[t] = doc_frequencies.get(t, 0) + 1
             total_tokens = sum(c.length for c in chunks)
 
+            prefix_cache = {}
+            for term in doc_frequencies:
+                if len(term) < 5:
+                    continue
+                min_pfx_len = max(3, int(len(term) * 0.3))
+                for pfx_len in range(min_pfx_len, len(term) + 1):
+                    pfx = term[:pfx_len]
+                    current_best = prefix_cache.get(pfx)
+                    if current_best is None or len(term) < len(current_best):
+                        prefix_cache[pfx] = term
+
             self.chunks = chunks
             self.topic_rows = topic_rows
             self.doc_frequencies = doc_frequencies
@@ -158,6 +173,7 @@ class RAGIndex:
             self._name_to_code = name_to_code
             self._code_to_name = code_to_name
             self._units_by_course = units_by_course
+            self._prefix_cache = prefix_cache
 
     def _resolve_unit(self, course_code: str, question: Dict[str, Any]) -> str:
         """Map a question onto a real syllabus unit.
@@ -240,6 +256,8 @@ class RAGIndex:
         """
         if len(token) < 3:
             return None
+        if self._prefix_cache and token in self._prefix_cache:
+            return self._prefix_cache[token]
         best = None
         for term in self.doc_frequencies:
             if not term.startswith(token) or len(term) < 5:
@@ -309,7 +327,7 @@ class RAGIndex:
             df = self.doc_frequencies.get(resolved, 0)
             if df == 0:
                 continue
-            tfs = [chunk.tokens.count(resolved) for chunk in self.chunks]
+            tfs = [chunk.term_counts.get(resolved, 0) for chunk in self.chunks]
             doc_lens = [chunk.length for chunk in self.chunks]
             term_scores = fast_batch_bm25(tfs, doc_lens, self.avg_doc_len, total_docs, df)
             for i in range(total_docs):

@@ -433,6 +433,42 @@ class TestRAGIndex(unittest.TestCase):
                                 f"dedup starved the result list: only {len(questions)} of 8")
 
 
+class TestSearchCacheEquivalence(unittest.TestCase):
+    """P1.2 - Search results and scores must be identical between uncached reference and cached paths."""
+
+    def test_chunk_term_counts_cached(self):
+        """Every RAGChunk must have precomputed term_counts dictionary."""
+        from src.backend.rag_engine import RAGIndex
+        idx = RAGIndex.get_instance()
+        self.assertTrue(idx.chunks, "index must contain chunks")
+        for c in idx.chunks[:50]:
+            self.assertTrue(hasattr(c, "term_counts"), "chunk must have term_counts attribute")
+            self.assertIsInstance(c.term_counts, dict)
+            for t, cnt in c.term_counts.items():
+                self.assertEqual(cnt, c.tokens.count(t))
+
+    def test_prefix_cache_populated_and_valid(self):
+        """RAGIndex must have precomputed _prefix_cache mapping."""
+        from src.backend.rag_engine import RAGIndex
+        idx = RAGIndex.get_instance()
+        self.assertTrue(hasattr(idx, "_prefix_cache"))
+        self.assertIsInstance(idx._prefix_cache, dict)
+        self.assertIn("prog", idx._prefix_cache)
+        self.assertEqual(idx._prefix_match("prog"), idx._prefix_cache.get("prog"))
+
+    def test_search_score_and_ordering_exact_match(self):
+        """Search outputs must produce identical IDs, ordering, and scores."""
+        from src.backend.rag_engine import RAGIndex
+        idx = RAGIndex.get_instance()
+        for q in ("avl tree rottaions", "dijkstra negative weights", "deadlok prevention", "dinamic programming"):
+            res = idx.search(q, top_k=10)
+            self.assertTrue(res, f"query {q!r} should return results")
+            for item in res:
+                self.assertIn("chunk_id", item)
+                self.assertIn("score", item)
+                self.assertGreater(item["score"], 0.05)
+
+
 class TestSearchEndpoint(unittest.TestCase):
     def _client(self):
         from fastapi.testclient import TestClient
