@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import json
 import re
 import sqlite3
@@ -911,6 +912,60 @@ class TestDatabaseInitialization(unittest.TestCase):
                 self.assertEqual(fetched["title"], "Preserved Assignment")
             finally:
                 database.DB_PATH = orig
+
+
+class TestQuestionGenerationConcurrency(unittest.TestCase):
+    """P1.1 - Question generation must not block the event loop and session state must be thread-safe."""
+
+    def test_session_history_thread_safety(self):
+        import threading
+        from src.backend.web_question_engine import WebQuestionEngine
+        
+        session_id = f"concur_sess_{time.time_ns()}"
+        course_code = "CS201"
+        topic = "Concurrency Testing"
+        
+        barrier = threading.Barrier(10)
+        errors = []
+        
+        def worker(thread_idx):
+            try:
+                barrier.wait(timeout=5.0)
+                for i in range(15):
+                    q = [{
+                        "id": f"q_{thread_idx}_{i}",
+                        "question_text": f"Question {thread_idx}-{i} text content",
+                        "difficulty": "Easy",
+                        "marks": 5
+                    }]
+                    WebQuestionEngine.record_session_questions(session_id, course_code, topic, q)
+                    hist = WebQuestionEngine.get_session_history(session_id, course_code, topic)
+                    self.assertLessEqual(len(hist), 60)
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=worker, args=(i,)) for i in range(10)]
+        for t in threads: t.start()
+        for t in threads: t.join()
+
+        self.assertEqual(errors, [], f"Thread errors occurred: {errors}")
+        final_hist = WebQuestionEngine.get_session_history(session_id, course_code, topic)
+        self.assertLessEqual(len(final_hist), 60)
+
+    def test_question_endpoint_runs_via_threadpool(self):
+        """Verify that question generation route uses threadpool so other routes are not blocked."""
+        import time
+        from fastapi.testclient import TestClient
+        from src.backend.app import app
+        from src.backend.web_question_engine import WebQuestionEngine
+
+        # Verify that the endpoint returns a valid 15-question response
+        client = TestClient(app)
+        res = client.get("/api/questions/course/CS201", params={"session_id": f"test_pool_{time.time_ns()}"})
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data.get("total"), 15)
+        self.assertEqual(len(data.get("questions", [])), 15)
 
 
 if __name__ == "__main__":

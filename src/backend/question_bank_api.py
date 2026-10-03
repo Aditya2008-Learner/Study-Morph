@@ -5,6 +5,7 @@ Add these routes to app.py
 
 from fastapi import APIRouter, HTTPException, Query, Body
 from typing import List, Dict, Any, Optional
+from starlette.concurrency import run_in_threadpool
 
 from .web_question_engine import WebQuestionEngine
 from .database import DatabaseRepo
@@ -68,7 +69,8 @@ async def get_course_questions(
     ref = bool(refresh) if (refresh is not None and not hasattr(refresh, 'default')) else False
     sess = str(session_id) if (session_id is not None and not hasattr(session_id, 'default')) else None
     try:
-        return WebQuestionEngine.generate_questions(
+        return await run_in_threadpool(
+            WebQuestionEngine.generate_questions,
             course_code=c_code,
             subject=subj,
             topic=top,
@@ -93,7 +95,8 @@ async def refresh_course_questions(
     topic = data.get("topic")
     session_id = data.get("session_id")
     try:
-        return WebQuestionEngine.generate_questions(
+        return await run_in_threadpool(
+            WebQuestionEngine.generate_questions,
             course_code=code,
             subject=subject,
             topic=topic,
@@ -118,7 +121,8 @@ async def get_topic_bank(
     ref = bool(refresh) if (refresh is not None and not hasattr(refresh, 'default')) else False
     sess = str(session_id) if (session_id is not None and not hasattr(session_id, 'default')) else None
     try:
-        return WebQuestionEngine.generate_questions(
+        return await run_in_threadpool(
+            WebQuestionEngine.generate_questions,
             course_code=subj,
             subject=subj,
             topic=top,

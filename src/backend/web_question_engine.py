@@ -5,6 +5,7 @@ import uuid
 import time
 import random
 import hashlib
+import threading
 from typing import List, Dict, Any, Optional, Set, Tuple
 from collections import defaultdict
 import requests
@@ -22,6 +23,7 @@ SEARCH_HEADERS = {
 # Session-based cache of previously generated question texts (for anti-duplication)
 _SESSION_HISTORY: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
 _SESSION_COUNTER: Dict[str, int] = defaultdict(int)
+_SESSION_LOCK = threading.RLock()
 
 # Difficulty profiles to distribute across 15 questions
 DIFFICULTY_DISTRIBUTION = [
@@ -42,16 +44,18 @@ class WebQuestionEngine:
     @staticmethod
     def get_session_history(session_id: str, course_code: str, topic: str) -> List[str]:
         key = f"{session_id}:{course_code}:{topic}"
-        return [q.get("question_text", "") for q in _SESSION_HISTORY.get(key, [])]
+        with _SESSION_LOCK:
+            return [q.get("question_text", "") for q in _SESSION_HISTORY.get(key, [])]
 
     @staticmethod
     def record_session_questions(session_id: str, course_code: str, topic: str, questions: List[Dict[str, Any]]) -> None:
         key = f"{session_id}:{course_code}:{topic}"
-        _SESSION_HISTORY[key].extend(questions)
-        # Keep only the last 60 questions per session/topic to bound memory
-        if len(_SESSION_HISTORY[key]) > 60:
-            _SESSION_HISTORY[key] = _SESSION_HISTORY[key][-60:]
-        _SESSION_COUNTER[key] += 1
+        with _SESSION_LOCK:
+            _SESSION_HISTORY[key].extend(questions)
+            # Keep only the last 60 questions per session/topic to bound memory
+            if len(_SESSION_HISTORY[key]) > 60:
+                _SESSION_HISTORY[key] = _SESSION_HISTORY[key][-60:]
+            _SESSION_COUNTER[key] += 1
 
     @staticmethod
     def search_web_for_topic(subject: str, topic: str, course_code: str = "", refresh_count: int = 0) -> Dict[str, Any]:
@@ -184,8 +188,9 @@ class WebQuestionEngine:
 
         # Track session refresh counter
         key = f"{session_id}:{course_code}:{topic}"
-        refresh_num = _SESSION_COUNTER[key] + (1 if force_refresh else 0)
-        previous_q_texts = WebQuestionEngine.get_session_history(session_id, course_code, topic)
+        with _SESSION_LOCK:
+            refresh_num = _SESSION_COUNTER[key] + (1 if force_refresh else 0)
+            previous_q_texts = [q.get("question_text", "") for q in _SESSION_HISTORY.get(key, [])]
 
         # 1. Conduct live web research
         research = WebQuestionEngine.search_web_for_topic(subject, topic, course_code, refresh_num)
